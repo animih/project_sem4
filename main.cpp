@@ -16,7 +16,7 @@ int main(int argc, char*argv[])
 
     RoomList Rooms;
 
-    Rooms.generate_rooms(100, 30, 160); //rad & avr & numb
+    Rooms.generate_rooms(100, 30, 90); //rad & avr & numb
 
     RenderWindow window(VideoMode(WIDTH, HEIGHT), "It's dark again");
 

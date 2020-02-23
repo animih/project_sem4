@@ -134,7 +134,7 @@ void RoomList::TriEdges(){
 
 	for(auto it = list.begin(); it != list.end();){
 
-		if((it->x_right-it->x_left)*(it->y_bottom - it->y_top) > average*average*1.75){
+		if((it->x_right-it->x_left)*(it->y_bottom - it->y_top) > average*average*1.45){
 		Final.push_back(*it);
 		
 		coords.push_back((it->x_right + it->x_left)/2);
