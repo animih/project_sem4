@@ -1,0 +1,1 @@
+g++ -c main.cpp room_graph.cpp rooms.cpp && g++ main.o room_graph.o rooms.o -o prog -lsfml-graphics -lsfml-window -lsfml-system && ./prog
