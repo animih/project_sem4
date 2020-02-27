@@ -13,7 +13,7 @@ int main(int argc, char * argv[]){
 
 	RoomList Rooms;
 
-	Rooms.generate_rooms(100, 30, 95); // РАдиус распредления, средний размер и число комнат
+	Rooms.generate_rooms(100, 40, 75); // РАдиус распредления, средний размер и число комнат
 
 	RenderWindow window(VideoMode(WIDTH, HEIGHT), "It's dark again");
 

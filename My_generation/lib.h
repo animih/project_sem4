@@ -53,6 +53,7 @@ class RoomList{
 	Graph * graph; // Граф, в котором комнаты - узлы, их связи - рёбра
 
 	int average;
+	int help = -1;
 
 	public:
 

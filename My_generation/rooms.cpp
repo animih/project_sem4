@@ -155,7 +155,7 @@ void RoomList::TriEdges(){
 
 	for(auto it = list.begin(); it != list.end();){
 
-		if((it->x_right-it->x_left)*(it->y_bottom - it->y_top) > average*average*1.5625){
+		if((it->x_right-it->x_left)*(it->y_bottom - it->y_top) > average*average*1.725){
 		Final.push_back(*it);
 		
 		coords.push_back((it->x_right + it->x_left)/2);
@@ -209,8 +209,39 @@ void RoomList::DrawEdges(RenderWindow * window){
 				exit(0);
 			}
 			if(u > i){
+
+				if(u < help && i < help){
+					sf::VertexArray line_new(sf::LineStrip, 5);
+					line_new[0].position = sf::Vector2f((Final[u].x_left+Final[u].x_right)/2-4, 
+				(Final[u].y_bottom+Final[u].y_top)/2-4);
+
+					line_new[1].position = sf::Vector2f((Final[u].x_left+Final[u].x_right)/2+4, 
+				(Final[u].y_bottom+Final[u].y_top)/2+4);
+					
+					line_new[2].position = sf::Vector2f((Final[i].x_left+Final[i].x_right)/2+4, 
+				(Final[i].y_bottom+Final[i].y_top)/2+4);
+
+
+					line_new[3].position = sf::Vector2f((Final[i].x_left+Final[i].x_right)/2-4, 
+				(Final[i].y_bottom+Final[i].y_top)/2-4);
+
+					line_new[4].position = sf::Vector2f((Final[u].x_left+Final[u].x_right)/2-4, 
+				(Final[u].y_bottom+Final[u].y_top)/2-4);
+
+					line_new[0].color = sf::Color::Green;
+					line_new[1].color = sf::Color::Green;
+					line_new[2].color = sf::Color::Green;
+					line_new[3].color = sf::Color::Green;
+					line_new[4].color = sf::Color::Green;
+
+
+					window->draw(line_new);
+
+					continue;
+				}
+				
 				line[1].position =  sf::Vector2f((Final[u].x_left+Final[u].x_right)/2, 
-			(Final[u].y_bottom+Final[u].y_top)/2);
+				(Final[u].y_bottom+Final[u].y_top)/2);
 
 				window->draw(line);
 			}
@@ -399,7 +430,7 @@ void RoomList::AddWalkRooms(){
 
 	num = Final.size();
 	for(int i = 0; i < num; i++){
-		for(auto it = graph->a[i].begin(); it != graph->a[i].end() && *it < num; ++it){
+		for(auto it = graph->a[i].begin(); it != graph->a[i].end(); ++it){
 
 			if(*it > num){
 				continue;
@@ -506,54 +537,11 @@ void RoomList::AddWalkRooms(){
 		}
 	}
 
-	n = 0;
 
-	double x, y;
-/*
+	help = num; /* Для диагоналяных коридоров я исопльзую след костыль - 
+	записываю куда-то значение числа комнат, док оридоров и потом, еслив стречаю ребро соединящее узлы
+	менье этого размера, обращаюсь с ними как с прямой */
 
-	for(int i = 0; i < num; i++){
-		for(auto it = graph->a[i].begin(); it != graph->a[i].end(); ++it){
-			if(*it >= num){
-				continue;
-			}
-
-			if(*it < num && *it > i){
-				if((num1_x+num2_x)/2 < WIDTH/2){
-					if(num1_x > num2_x){
-						x = num2_x;
-						y = num1_y;
-					}
-					else{
-						x = num1_x;
-						y = num2_y;
-					}
-				}
-				else{
-					if(num1_x < num2_x){
-						x = num2_x;
-						y = num1_y;
-					}
-					else{
-						x = num1_x;
-						y = num2_y;
-					}
-				}
-
-				Final.push_back(Room(x-4, x+4, y-4, y+4));
-				graph->a.push_back({});
-
-				graph->addEdge(*it, (char)Final.size()-1);
-				graph->a[*it].remove(i);
-
-				graph->a[(char)Final.size()-1].push_back(*it);
-				*it = (char)Final.size()-1;
-
-				n++;
-			}
-				
-		}
-	}
-*/
 printf("Done %d", n);
 
 }
