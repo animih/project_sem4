@@ -9,9 +9,11 @@
 #include <iostream>
 #include "delauney.h"
 
+// Условная "бесконечность" для алг Прима (ключ - растояние между центрами)
 
-#define INF 99999999999 
+#define INF WIDTH*WIDTH+HEIGHT*HEIGHT
 
+//Просто, чтобы не заебаться пока пишешь это
 
 #define num1_top Final[i].y_top
 #define num1_bottom  Final[i].y_bottom
@@ -26,6 +28,8 @@
 #define num2_right Final[*it].x_right
 #define num2_x (Final[*it].x_left+Final[*it].x_right)/2
 #define num2_y (Final[*it].y_bottom+Final[*it].y_top)/2
+
+//Проверка комнат на пересечение
 
 bool RoomList::is_collide(std::_List_iterator<Room> room1, std::_List_iterator<Room>room2){
 
@@ -52,7 +56,11 @@ bool RoomList::is_collide(std::_List_iterator<Room> room1, std::_List_iterator<R
 
 }
 
-void RoomList::push_rooms(float time){
+// 0 - base, 1 - Все комнаты раскиданы
+
+bool RoomList::push_rooms(float time){
+
+	bool flag = 1;
 
 	float speedx;
 	float speedy;
@@ -63,7 +71,7 @@ void RoomList::push_rooms(float time){
 			
 			
 			if(is_collide(it1, it2)){
-
+				flag =0;
 				speedx = (it1->x_right + it1->x_left - it2->x_right - it2->x_left)/2;
 				speedy = (it1->y_top + it1->y_bottom - it2->y_top - it2->y_bottom)/2;
 
@@ -87,10 +95,7 @@ void RoomList::push_rooms(float time){
 		it->move(time);
 	}
 
-	
-
-	//napicat pozje
-	return;
+	return flag;
 }
 
 void RoomList::update(RenderWindow * window){
@@ -99,6 +104,13 @@ void RoomList::update(RenderWindow * window){
 	}
 
 }
+
+/* Генерируем лист комнат. 
+
+	Размеры - Гауссовское распр
+	Координаты - равномерное по кругу
+
+*/
 
 void RoomList::generate_rooms(int radius, int average, int total_number){
 
@@ -127,6 +139,15 @@ void RoomList::generate_rooms(int radius, int average, int total_number){
 
 }
 
+/*
+
+	Здесь происходит триангуляция Делоне.
+	По-хорошему, стоит перепписать библиотеку под свои нужды.
+	Но в прицнипе, итак работает.
+	Так что и пофиг.
+
+*/
+
 
 void RoomList::TriEdges(){
 
@@ -134,7 +155,7 @@ void RoomList::TriEdges(){
 
 	for(auto it = list.begin(); it != list.end();){
 
-		if((it->x_right-it->x_left)*(it->y_bottom - it->y_top) > average*average*1.45){
+		if((it->x_right-it->x_left)*(it->y_bottom - it->y_top) > average*average*1.5625){
 		Final.push_back(*it);
 		
 		coords.push_back((it->x_right + it->x_left)/2);
@@ -165,20 +186,28 @@ void RoomList::TriEdges(){
 
 }
 
+/*
+
+	Обновлённая функция прорисовки
+
+*/
+
 void RoomList::DrawEdges(RenderWindow * window){
 
 	sf::VertexArray line(sf::LinesStrip, 2);
 
 	auto color = sf::Color::White;
 
-	for(int i = 0; i < Final.size(); i++){
-		Final[i].upd(window);
-	}
+	
 
 	for(int i = 0; i < Final.size()-1; i++){
 		line[0].position =  sf::Vector2f((Final[i].x_left+Final[i].x_right)/2, 
 			(Final[i].y_bottom+Final[i].y_top)/2);
 		for(char u : graph->a[i]){
+			if(u == i){
+				printf("erro \n"); //Просто проверка на случай если мы сделали цикл на один узел (я забыл как называется)
+				exit(0);
+			}
 			if(u > i){
 				line[1].position =  sf::Vector2f((Final[u].x_left+Final[u].x_right)/2, 
 			(Final[u].y_bottom+Final[u].y_top)/2);
@@ -189,11 +218,19 @@ void RoomList::DrawEdges(RenderWindow * window){
 			
 		}
 	}
-	
-	
-	
 
+	for(int i = 0; i < Final.size(); i++){
+		Final[i].upd(window);
+	}
 }
+
+/* 
+	Короче, дальше на подходе алгоритм Прима
+	Перовначально, я писал его через кучу (отсюда и название pop_min)
+	Но, как оказалось, из-за одной микроштуки там всё равно скорость о(n)
+	Так что я переписал всё под массив
+	НУ а хуле нам, физикам.
+*/
 
 char pop_min(double * weight, int number){
 	char k = 0;
@@ -224,8 +261,8 @@ void RoomList::BuildTree(){
 
 
 	for(int i = 0; i< number; i++){
-		weight[i] = INF;
-		parrent[i] = -1;
+		weight[i] = INF; // Весь весовой массив - бесконечности
+		parrent[i] = -1; // Все дети - сироты. Мир - печлаьное место
 	}
 
 	weight[0] = 0;
@@ -266,13 +303,20 @@ void RoomList::BuildTree(){
 	
 	int n = rand()%number;
 
-	// Возвращение части пердыдущих ребер
+	/* Здесь происходит возварщение части рёбер из триангуляции
+		По-просту говоря, я хоу иметь проодные пути в своём подземелье.
+	
+		Беда в том, что такой подход рушит всё то, ради чего минимальное дерево строилось
+		Из-за этого, редко, происхожит наслаивание "коридоров". Мб получится решить эту проблему прорисовкой в ходе игры (один идёт сверху, другйо снизу)
+
+		Если кто-то придумает более изящный сопосб возвращения проходных коридоров, я буду очень рад.
+	*/
 
 	
 	std::vector <int> visited = {};
 
-	for(int i = 0; i<number; i+=9){
-		while(std::find(visited.begin(), visited.end(), n) != visited.end())
+	for(int i = 0; i<number; i+=5){
+		//while(std::find(visited.begin(), visited.end(), n) != visited.end()) // ТУт проблема - почему-то работает лучше без исключения повтора (?!). Скорей всего я - лох
 		n = rand()%number;
 		for(char k: graph->a[n]){
 			if(parrent[k] == n || parrent[n] == k){
@@ -286,10 +330,13 @@ void RoomList::BuildTree(){
 		}
 
 	}
-	
-	
-	
 
+	free(weight);
+	free(parrent);
+	
+	
+	
+	free(graph);
 	graph = new Graph(number);
 
 	for(char i = 0; i <res.size(); i+=2){
@@ -349,63 +396,21 @@ void RoomList::AddWalkRooms(){
 			}
 		}
 	}
-	num = Final.size();
-	double x, y;
-
-	for(int i = 0; i < num; i++){
-		for(auto it = graph->a[i].begin(); it != graph->a[i].end() && *it < num; ++it){
-		if ((num1_x-num2_x)!=0 && (num1_x-num2_left)*(num1_x-num2_right) > 0 && (num1_left-num2_left)*(num1_left-num2_right) > 0 && (num1_right-num2_left)*(num1_right-num2_right) > 0 &&
-			(num1_y-num2_top)*(num1_y-num2_bottom) > 0 && (num1_top-num2_top)*(num1_top-num2_bottom) > 0 && (num1_bottom-num2_top)*(num1_bottom-num2_bottom) > 0){
-				if((num1_x +num2_x)/2 < WIDTH/2){
-					if(num1_x > num2_x){
-						x = num2_x, y = num1_y;
-					}
-					else{
-						x = num1_x, y = num2_y;
-					}
-					
-				}
-				else{
-					if(num1_x < num2_x){
-						x = num2_x, y = num1_y;
-					}
-					else{
-						x = num1_x, y = num2_y;
-					}
-					
-				}
-
-				Final.push_back(Room(x-6, x+6, y-6, y+6));
-
-				graph->a.push_back({});
-				
-				graph->addEdge(*it, (char)Final.size()-1);
-				graph->a[*it].remove(i);
-
-				graph->a[(char)Final.size()-1].push_back(*it);
-				*it = (char)Final.size()-1;
-
-			}
-		}
-	}
 
 	num = Final.size();
-
-
-
 	for(int i = 0; i < num; i++){
 		for(auto it = graph->a[i].begin(); it != graph->a[i].end() && *it < num; ++it){
 
-			if(*it >= num){
-				break;
+			if(*it > num){
+				continue;
 			}
 
-			if((num1_x-num2_left)*(num1_x-num2_right) < 0 && fabs(num1_x-num2_left) > 4 && fabs(num1_x-num2_right) > 4){
+			if((num1_x-num2_left)*(num1_x-num2_right) < 0 && fabs(num1_x-num2_left) > 3 && fabs(num1_x-num2_right) > 3){
 				if(num1_y > num2_y){
-					Final.push_back(Room((num1_x+num2_x)/2 - 4, (num1_x+num2_x)/2 + 4, num2_bottom, num1_top));
+					Final.push_back(Room((num1_x+num2_x)/2 - 3, (num1_x+num2_x)/2 + 3, num2_bottom, num1_top));
 				}
 				else{
-					Final.push_back(Room((num1_x+num2_x)/2 - 4, (num1_x+num2_x)/2 + 4, num2_top, num1_bottom));
+					Final.push_back(Room((num1_x+num2_x)/2 - 3, (num1_x+num2_x)/2 + 3, num2_top, num1_bottom));
 				}
 				graph->a.push_back({});
 
@@ -416,12 +421,12 @@ void RoomList::AddWalkRooms(){
 				*it = (char)Final.size()-1;
 				
 			}
-			if((num1_left-num2_left)*(num1_left-num2_right) < 0 && fabs(num1_left-num2_left) > 4 && fabs(num1_left-num2_right) > 4){
+			if((num1_left-num2_left)*(num1_left-num2_right) < 0 && fabs(num1_left-num2_left) > 3 && fabs(num1_left-num2_right) > 3){
 				if(num1_y > num2_y){
-					Final.push_back(Room((num1_left+num2_right)/2 - 4, (num1_left+num2_right)/2 + 4, num2_bottom, num1_top));
+					Final.push_back(Room((num1_left+num2_right)/2 - 3, (num1_left+num2_right)/2 + 3, num2_bottom, num1_top));
 				}
 				else{
-					Final.push_back(Room((num1_left+num2_right)/2 - 4, (num1_left+num2_right)/2 + 4, num2_top, num1_bottom));
+					Final.push_back(Room((num1_left+num2_right)/2 - 3, (num1_left+num2_right)/2 + 3, num2_top, num1_bottom));
 				}
 				graph->a.push_back({});
 				
@@ -432,12 +437,12 @@ void RoomList::AddWalkRooms(){
 				*it = (char)Final.size()-1;
 				
 			}
-			if((num1_right-num2_left)*(num1_right-num2_right) < 0 && fabs(num1_right-num2_left) > 4 && fabs(num1_right-num2_right) > 4){
+			if((num1_right-num2_left)*(num1_right-num2_right) < 0 && fabs(num1_right-num2_left) > 3 && fabs(num1_right-num2_right) > 3){
 				if(num1_y > num2_y){
-					Final.push_back(Room((num1_right+num2_left)/2 - 4, (num1_right+num2_left)/2 + 4, num2_bottom, num1_top));
+					Final.push_back(Room((num1_right+num2_left)/2 - 3, (num1_right+num2_left)/2 + 3, num2_bottom, num1_top));
 				}
 				else{
-					Final.push_back(Room((num1_right+num2_left)/2 - 4, (num1_right+num2_left)/2 + 4, num2_top, num1_bottom));
+					Final.push_back(Room((num1_right+num2_left)/2 - 3, (num1_right+num2_left)/2 + 3, num2_top, num1_bottom));
 				}
 				graph->a.push_back({});
 				
@@ -448,12 +453,12 @@ void RoomList::AddWalkRooms(){
 				*it = (char)Final.size()-1;
 				
 			}
-			if((num1_y-num2_top)*(num1_y-num2_bottom) < 0 && fabs(num1_y-num2_top) > 4 && fabs(num1_y-num2_bottom) > 4){
+			if((num1_y-num2_top)*(num1_y-num2_bottom) < 0 && fabs(num1_y-num2_top) > 3 && fabs(num1_y-num2_bottom) > 3){
 				if(num1_x > num2_x){
-					Final.push_back(Room(num2_right, num1_left, (num2_y+num1_y)/2-4, (num2_y+num1_y)/2+4));
+					Final.push_back(Room(num2_right, num1_left, (num2_y+num1_y)/2-3, (num2_y+num1_y)/2+3));
 				}
 				else{
-					Final.push_back(Room(num1_right, num2_left, (num2_y+num1_y)/2-4, (num2_y+num1_y)/2+4));
+					Final.push_back(Room(num1_right, num2_left, (num2_y+num1_y)/2-3, (num2_y+num1_y)/2+3));
 				}
 
 				graph->a.push_back({});
@@ -464,12 +469,12 @@ void RoomList::AddWalkRooms(){
 				graph->a[(char)Final.size()-1].push_back(*it);
 				*it = (char)Final.size()-1;
 			}
-			if((num1_top-num2_top)*(num1_top-num2_bottom) < 0 && fabs(num1_top-num2_top) > 4 && fabs(num1_top-num2_bottom) > 4){
+			if((num1_top-num2_top)*(num1_top-num2_bottom) < 0 && fabs(num1_top-num2_top) > 3 && fabs(num1_top-num2_bottom) > 3){
 				if(num1_x > num2_x){
-					Final.push_back(Room(num2_right, num1_left, (num2_bottom+num1_top)/2-4, (num2_bottom+num1_top)/2+4));
+					Final.push_back(Room(num2_right, num1_left, (num2_bottom+num1_top)/2-3, (num2_bottom+num1_top)/2+3));
 				}
 				else{
-					Final.push_back(Room(num1_right, num2_left, (num2_bottom+num1_top)/2-4, (num2_bottom+num1_top)/2+4));
+					Final.push_back(Room(num1_right, num2_left, (num2_bottom+num1_top)/2-3, (num2_bottom+num1_top)/2+3));
 				}
 
 				graph->a.push_back({});
@@ -480,12 +485,12 @@ void RoomList::AddWalkRooms(){
 				graph->a[(char)Final.size()-1].push_back(*it);
 				*it = (char)Final.size()-1;
 			}
-			if((num1_bottom-num2_top)*(num1_bottom-num2_bottom) < 0 && fabs(num1_bottom-num2_top) > 4 && fabs(num1_bottom-num2_bottom) > 4){
+			if((num1_bottom-num2_top)*(num1_bottom-num2_bottom) < 0 && fabs(num1_bottom-num2_top) > 3 && fabs(num1_bottom-num2_bottom) > 3){
 				if(num1_x > num2_x){
-					Final.push_back(Room(num2_right, num1_left, (num1_bottom+num2_top)/2-4, (num2_bottom+num1_top)/2+4));
+					Final.push_back(Room(num2_right, num1_left, (num1_bottom+num2_top)/2-3, (num2_bottom+num1_top)/2+3));
 				}
 				else{
-					Final.push_back(Room(num1_right, num2_left, (num1_bottom+num2_top)/2-4, (num2_bottom+num1_top)/2+4));
+					Final.push_back(Room(num1_right, num2_left, (num1_bottom+num2_top)/2-3, (num2_bottom+num1_top)/2+3));
 				}
 
 				graph->a.push_back({});
@@ -501,8 +506,54 @@ void RoomList::AddWalkRooms(){
 		}
 	}
 
+	n = 0;
 
-	
+	double x, y;
+/*
+
+	for(int i = 0; i < num; i++){
+		for(auto it = graph->a[i].begin(); it != graph->a[i].end(); ++it){
+			if(*it >= num){
+				continue;
+			}
+
+			if(*it < num && *it > i){
+				if((num1_x+num2_x)/2 < WIDTH/2){
+					if(num1_x > num2_x){
+						x = num2_x;
+						y = num1_y;
+					}
+					else{
+						x = num1_x;
+						y = num2_y;
+					}
+				}
+				else{
+					if(num1_x < num2_x){
+						x = num2_x;
+						y = num1_y;
+					}
+					else{
+						x = num1_x;
+						y = num2_y;
+					}
+				}
+
+				Final.push_back(Room(x-4, x+4, y-4, y+4));
+				graph->a.push_back({});
+
+				graph->addEdge(*it, (char)Final.size()-1);
+				graph->a[*it].remove(i);
+
+				graph->a[(char)Final.size()-1].push_back(*it);
+				*it = (char)Final.size()-1;
+
+				n++;
+			}
+				
+		}
+	}
+*/
 printf("Done %d", n);
 
 }

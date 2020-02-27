@@ -22,10 +22,10 @@ Room::Room(double x_left, double x_right, double y_top, double y_bottom){
 void Room::move(float time){
 
 	if(x_left < 0 || x_right > WIDTH){
-		speedx = - speedx;
+		speedx = - speedx; // Упругий удар о стенки
 	}
 	if(y_top < 0 || y_bottom > HEIGHT){
-		speedy = - speedy;
+		speedy = - speedy; // Упругий Удар о стенки
 	}
 
 	x_left += 0.05*time*speedx/num_neighbors;
@@ -41,16 +41,14 @@ void Room::move(float time){
 
 }
 
+
+/*Рисуем комнату. Тут нужно понимать, что "Outline" рисуется поверх 
+прямоугольнкиа, потому может возникнуть илюзия "наслоения" между непересекающимися прямоугольнкиами */
+
+
 void Room::upd(RenderWindow * window){
 
 	RectangleShape room(sf::Vector2f(x_right-x_left, y_bottom-y_top));
-
-	/*
-	
-	if(x_right-x_left < 0 || y_bottom-y_top < 0)
-		printf("%f, %f \n", x_right-x_left, y_bottom-y_top);
-
-	*/
 
 	room.setPosition(x_left, y_top);
  	room.setFillColor(sf::Color(23, 23, 23));
@@ -82,7 +80,7 @@ void pyaniy_polyarnik(int radius, double* coord){
 void random_size(int average, int* size){
 
 	static std::default_random_engine generator;
-	std::normal_distribution<double> distribution((float)average, (float)average/4);
+	std::normal_distribution<double> distribution((float)average, (float)average/3);
 
 	size[0] = int(distribution(generator));
 	size[1] = 0;
