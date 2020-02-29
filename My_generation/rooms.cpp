@@ -8,6 +8,7 @@
 #include <list>
 #include <iostream>
 #include "delauney.h"
+#include <math.h>
 
 // Условная "бесконечность" для алг Прима (ключ - растояние между центрами)
 
@@ -51,8 +52,8 @@ bool RoomList::is_collide(std::_List_iterator<Room> room1, std::_List_iterator<R
 	size2[0] = (room2->x_right - room2->x_left)/2;
 	size2[1] = (room2->y_bottom - room2->y_top)/2;
 
-	return fabs(coord1[0]-coord2[0]) <= (size1[0]+ size2[0]+1)*1.25 &&
-		fabs(coord1[1]-coord2[1]) <= (size1[1]+ size2[1]+1)*1.25;
+	return fabs(coord1[0]-coord2[0]) <= (size1[0]+ size2[0]+1)*1.15 &&
+		fabs(coord1[1]-coord2[1]) <= (size1[1]+ size2[1]+1)*1.15;
 
 }
 
@@ -211,22 +212,29 @@ void RoomList::DrawEdges(RenderWindow * window){
 			if(u > i){
 
 				if(u < help && i < help){
+
+					int k = (Final[u].y_bottom + Final[u].y_top - Final[i].y_top - Final[i].y_bottom) / (Final[u].x_left + Final[u].x_right - Final[i].x_left - Final[i].x_right);
+
+					// Собственно вектор номрали (ненормированный) это (-k, 1)
+
+					std::vector<double> norm = {-k/sqrt(k*k+1*1), 1/sqrt(k*k+1*1)};
+
 					sf::VertexArray line_new(sf::LineStrip, 5);
-					line_new[0].position = sf::Vector2f((Final[u].x_left+Final[u].x_right)/2-4, 
-				(Final[u].y_bottom+Final[u].y_top)/2-4);
+					line_new[0].position = sf::Vector2f((Final[u].x_left+Final[u].x_right)/2-norm[0]*4, 
+				(Final[u].y_bottom+Final[u].y_top)/2-norm[1]*4);
 
-					line_new[1].position = sf::Vector2f((Final[u].x_left+Final[u].x_right)/2+4, 
-				(Final[u].y_bottom+Final[u].y_top)/2+4);
+					line_new[1].position = sf::Vector2f((Final[u].x_left+Final[u].x_right)/2+norm[0]*4, 
+				(Final[u].y_bottom+Final[u].y_top)/2+norm[1]*4);
 					
-					line_new[2].position = sf::Vector2f((Final[i].x_left+Final[i].x_right)/2+4, 
-				(Final[i].y_bottom+Final[i].y_top)/2+4);
+					line_new[2].position = sf::Vector2f((Final[i].x_left+Final[i].x_right)/2+norm[0]*4, 
+				(Final[i].y_bottom+Final[i].y_top)/2+norm[1]*4);
 
 
-					line_new[3].position = sf::Vector2f((Final[i].x_left+Final[i].x_right)/2-4, 
-				(Final[i].y_bottom+Final[i].y_top)/2-4);
+					line_new[3].position = sf::Vector2f((Final[i].x_left+Final[i].x_right)/2-norm[0]*4, 
+				(Final[i].y_bottom+Final[i].y_top)/2-norm[1]*4);
 
-					line_new[4].position = sf::Vector2f((Final[u].x_left+Final[u].x_right)/2-4, 
-				(Final[u].y_bottom+Final[u].y_top)/2-4);
+					line_new[4].position = sf::Vector2f((Final[u].x_left+Final[u].x_right)/2-norm[0]*4, 
+				(Final[u].y_bottom+Final[u].y_top)/2-norm[1]*4);
 
 					line_new[0].color = sf::Color::Green;
 					line_new[1].color = sf::Color::Green;
