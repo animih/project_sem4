@@ -440,7 +440,7 @@ void RoomList::AddWalkRooms(){
 	for(int i = 0; i < num; i++){
 		for(auto it = graph->a[i].begin(); it != graph->a[i].end(); ++it){
 
-			if(*it > num){
+			if(*it >= num-1){
 				continue;
 			}
 
@@ -456,7 +456,10 @@ void RoomList::AddWalkRooms(){
 				graph->addEdge(*it, (char)Final.size()-1);
 				graph->a[*it].remove(i);
 
-				graph->a[(char)Final.size()-1].push_back(*it);
+
+				
+				graph->a[(char)Final.size()-1].push_back(i);
+
 				*it = (char)Final.size()-1;
 				
 			}
@@ -472,7 +475,9 @@ void RoomList::AddWalkRooms(){
 				graph->addEdge(*it, (char)Final.size()-1);
 				graph->a[*it].remove(i);
 
-				graph->a[(char)Final.size()-1].push_back(*it);
+				
+				graph->a[(char)Final.size()-1].push_back(i);
+
 				*it = (char)Final.size()-1;
 				
 			}
@@ -488,7 +493,9 @@ void RoomList::AddWalkRooms(){
 				graph->addEdge(*it, (char)Final.size()-1);
 				graph->a[*it].remove(i);
 
-				graph->a[(char)Final.size()-1].push_back(*it);
+				
+				graph->a[(char)Final.size()-1].push_back(i);
+
 				*it = (char)Final.size()-1;
 				
 			}
@@ -505,7 +512,9 @@ void RoomList::AddWalkRooms(){
 				graph->addEdge(*it, (char)Final.size()-1);
 				graph->a[*it].remove(i);
 
-				graph->a[(char)Final.size()-1].push_back(*it);
+				
+				graph->a[(char)Final.size()-1].push_back(i);
+
 				*it = (char)Final.size()-1;
 			}
 			if((num1_top-num2_top)*(num1_top-num2_bottom) < 0 && fabs(num1_top-num2_top) > 3 && fabs(num1_top-num2_bottom) > 3){
@@ -521,7 +530,9 @@ void RoomList::AddWalkRooms(){
 				graph->addEdge(*it, (char)Final.size()-1);
 				graph->a[*it].remove(i);
 
-				graph->a[(char)Final.size()-1].push_back(*it);
+				
+				graph->a[(char)Final.size()-1].push_back(i);
+
 				*it = (char)Final.size()-1;
 			}
 			if((num1_bottom-num2_top)*(num1_bottom-num2_bottom) < 0 && fabs(num1_bottom-num2_top) > 3 && fabs(num1_bottom-num2_bottom) > 3){
@@ -537,7 +548,9 @@ void RoomList::AddWalkRooms(){
 				graph->addEdge(*it, (char)Final.size()-1);
 				graph->a[*it].remove(i);
 
-				graph->a[(char)Final.size()-1].push_back(*it);
+				
+				graph->a[(char)Final.size()-1].push_back(i);
+
 				*it = (char)Final.size()-1;
 			}
 			

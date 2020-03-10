@@ -23,6 +23,7 @@ class Room{
 	int num_neighbors; // Просто для нормировки скорсоти при расталкивании
 
 	friend class RoomList; // Ну а куда в мире без друзей?
+	friend class Player;
 
 	public:
 	Room(double x_left, double x_right, double y_top, double y_bottom);
@@ -55,6 +56,8 @@ class RoomList{
 	int average;
 	int help = -1;
 
+	friend class Player;
+
 	public:
 
 		void generate_rooms(int radius, int average, int total_number);
@@ -67,4 +70,22 @@ class RoomList{
 		void DrawTree(RenderWindow * window);
 		void AddWalkRooms();
 
+};
+
+
+class Player{
+
+	double x, y;
+	double speed = 0.05;
+	double dir_x = 0;
+	double dir_y = 0;
+
+	int index;
+	RoomList * list;
+
+public:
+	Player(RoomList *);
+	void add_dir(double, double);
+	void update(RenderWindow * window, float time);
+	
 };

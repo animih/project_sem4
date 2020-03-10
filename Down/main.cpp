@@ -116,18 +116,48 @@ int main(int argc, char * argv[]){
 
     Rooms.AddWalkRooms();
 
+    Player GG(&Rooms);
+
+    
+
+
     while(window.isOpen())
     {
     	
+        float time = clock.getElapsedTime().asMicroseconds();
+        clock.restart();
+        time = time/800;
+
         while(window.pollEvent(event))
         {
             if(event.type == Event::Closed)
                 window.close();
         }
 
+
+        if (Keyboard::isKeyPressed(Keyboard::Left))
+            GG.add_dir(-1, 0); 
+
+        if (Keyboard::isKeyPressed(Keyboard::Right))
+            GG.add_dir(1, 0); 
+
+        if (Keyboard::isKeyPressed(Keyboard::Up))
+            GG.add_dir(0, -1); 
+
+        if (Keyboard::isKeyPressed(Keyboard::Down))
+            GG.add_dir(0, 1); 
+
+
+        
+
         window.clear();
         window.setView(view);
-        Rooms.DrawEdges(&window);
+        
+
+        GG.update(&window, time);
+
+        if (Keyboard::isKeyPressed(Keyboard::Escape))
+            Rooms.DrawEdges(&window);
 
         window.display();
  	}
