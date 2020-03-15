@@ -80,7 +80,7 @@ void pyaniy_polyarnik(int radius, double* coord){
 void random_size(int average, int* size){
 
 	static std::default_random_engine generator;
-	std::normal_distribution<double> distribution((float)average, (float)average/3.1);
+	std::normal_distribution<double> distribution((float)average, (float)average/3);
 
 	size[0] = int(distribution(generator));
 	size[1] = 0;

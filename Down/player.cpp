@@ -22,21 +22,38 @@ void Player::add_dir(double x, double y){
 	dir_x += x;
 	dir_y += y;
 
-	dir_x /= sqrt(dir_x*dir_x + dir_y * dir_y);
-	dir_y /= sqrt(dir_x*dir_x + dir_y * dir_y);
-	
+
+	if(dir_x != 0 && dir_y !=0){
+		dir_x /= sqrt(dir_x*dir_x + dir_y * dir_y);
+		dir_y /= sqrt(dir_x*dir_x + dir_y * dir_y);
+	}
+
+
+
 	for (char u : list->graph->a[index]){
-		printf("%d ", u);
+		
 		if(this->x <= list->Final[u].x_right+2 &&  this->x >= list->Final[u].x_left-2
 		&&  this->y <= list->Final[u].y_bottom+2 &&  this->y >= list->Final[u].y_top-2){
 			index = u;
+			printf("this: %d neghbors: ", u);
+			for(char v: list->graph->a[index]){
+				printf("%d ", v);
+			}
+			printf("\n");
 			return;
 		}
 		
+
+		
 	}
-	printf("|");
+	
+	
 
+	
 
+	if(cheet){
+		return;
+	}
 	
 	if(dir_x > 0 && this->x > list->Final[index].x_right){
 		dir_x = -1;
@@ -53,7 +70,7 @@ void Player::add_dir(double x, double y){
 		dir_y = 1;
 	}
 	
-
+	
 }
 
 

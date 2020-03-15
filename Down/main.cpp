@@ -13,7 +13,7 @@ int main(int argc, char * argv[]){
 
 	RoomList Rooms;
 
-	Rooms.generate_rooms(40, 40, 105); // РАдиус распредления, средний размер и число комнат
+	Rooms.generate_rooms(50, 40, 95); // РАдиус распредления, средний размер и число комнат
 
 	RenderWindow window(VideoMode(WIDTH, HEIGHT), "It's dark again");
 
@@ -45,7 +45,7 @@ int main(int argc, char * argv[]){
 
 		timer += time/1000;
 
-        if(timer >= 3){
+        if(timer >= 2){
         	break;
         	
         }
@@ -75,7 +75,7 @@ int main(int argc, char * argv[]){
 
         timer += time/1000;
 
-        if(timer >= 2){
+        if(timer >= 1.2){
         	break;
         }
 
@@ -90,6 +90,8 @@ int main(int argc, char * argv[]){
 
     timer = 0;
 
+    bool draw = 1;
+
     while(window.isOpen())
     {
     	float time = clock.getElapsedTime().asMicroseconds();
@@ -103,7 +105,7 @@ int main(int argc, char * argv[]){
 
         timer += time/1000;
 
-        if(timer >= 2){
+        if(timer >= 1.2){
         	break;
         }
 
@@ -119,7 +121,7 @@ int main(int argc, char * argv[]){
     Player GG(&Rooms);
 
     
-
+    int counter = 0;
 
     while(window.isOpen())
     {
@@ -152,12 +154,29 @@ int main(int argc, char * argv[]){
 
         window.clear();
         window.setView(view);
-        
 
-        GG.update(&window, time);
+        GG.cheet = 0;
 
         if (Keyboard::isKeyPressed(Keyboard::Escape))
+            GG.cheet = 1;
+        
+        
+        if (Keyboard::isKeyPressed(Keyboard::K)){
+            counter++;
+            if(counter == 80){
+                draw = (draw+1)%2;
+            }
+        }
+        else{
+            counter=0;
+        }
+
+        if(draw)
             Rooms.DrawEdges(&window);
+            
+        GG.update(&window, time);
+
+
 
         window.display();
  	}

@@ -76,14 +76,17 @@ class RoomList{
 class Player{
 
 	double x, y;
-	double speed = 0.05;
+	double speed = 0.15;
 	double dir_x = 0;
 	double dir_y = 0;
+
+
 
 	int index;
 	RoomList * list;
 
 public:
+	bool cheet = 0;
 	Player(RoomList *);
 	void add_dir(double, double);
 	void update(RenderWindow * window, float time);
