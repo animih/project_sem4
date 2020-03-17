@@ -6,14 +6,12 @@
 #include <SFML/Graphics.hpp>
 #include "lib.h"
 
-using namespace sf;
-
 
 int main(int argc, char * argv[]){
 
 	RoomList Rooms;
 
-	Rooms.generate_rooms(50, 40, 95); // РАдиус распредления, средний размер и число комнат
+	Rooms.generate_rooms(50, 45, 75); // РАдиус распредления, средний размер и число комнат
 
 	RenderWindow window(VideoMode(WIDTH, HEIGHT), "It's dark again");
 

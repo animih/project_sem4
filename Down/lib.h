@@ -54,12 +54,12 @@ class RoomList{
 	Graph * graph; // Граф, в котором комнаты - узлы, их связи - рёбра
 
 	int average;
-	int help = -1;
+	
 
 	friend class Player;
 
 	public:
-
+		int help = -1;
 		void generate_rooms(int radius, int average, int total_number);
 		bool push_rooms(float time);
 		void update(RenderWindow * window);

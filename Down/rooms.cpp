@@ -52,8 +52,8 @@ bool RoomList::is_collide(std::_List_iterator<Room> room1, std::_List_iterator<R
 	size2[0] = (room2->x_right - room2->x_left)/2;
 	size2[1] = (room2->y_bottom - room2->y_top)/2;
 
-	return fabs(coord1[0]-coord2[0]) <= (size1[0]+ size2[0]+1)*1.05 &&
-		fabs(coord1[1]-coord2[1]) <= (size1[1]+ size2[1]+1)*1.05;
+	return fabs(coord1[0]-coord2[0]) <= (size1[0]+ size2[0]+1)*1.02 &&
+		fabs(coord1[1]-coord2[1]) <= (size1[1]+ size2[1]+1)*1.02;
 
 }
 
@@ -393,6 +393,13 @@ void RoomList::BuildTree(){
 
 //Костылииии
 
+double min(double a, double b){
+	return a < b ? a : b;
+}
+double max(double a, double b){
+	return a > b ? a : b;
+}
+
 
 
 void RoomList::AddWalkRooms(){
@@ -403,7 +410,63 @@ void RoomList::AddWalkRooms(){
 
 	int n = 0;
 	int flag = 0;
+
+
+	// Переписать блять!
 	
+
+	for(Room room: list){
+		flag = 1;
+		for(int i = 0; i < num; i++){
+			auto it_end =  graph->a[i].end();
+			for(auto it=graph->a[i].begin(); it != it_end; it++){
+
+				k = (num1_y - num2_y)/(num1_x - num2_x);
+
+				if( ( (k*(room.x_left - num1_x) + num1_y - room.y_top)*(k*(room.x_right - num1_x) + num1_y- room.y_bottom) < 0 
+					&& (room.x_left - min(num1_left, num2_left) )*(room.x_left - max(num1_right, num2_right)) < 0 && ((room.y_bottom+room.y_top)/2 - num1_y) * ((room.y_bottom+room.y_top)/2 - num2_y) < 0 ) || 
+					( (k*(room.x_right - num1_x) + num1_y - room.y_top)*(k*(room.x_left - num1_x) + num1_y- room.y_bottom) < 0 
+					&& (room.x_right - min(num1_left, num2_left) )*(room.x_right - max(num1_right, num2_right)) < 0 && ((room.y_bottom+room.y_top)/2 - num1_y) * ((room.y_bottom+room.y_top)/2 - num2_y) < 0 ) ||
+
+					( (1/k*(room.y_top - num1_y) + num1_x - room.x_left)*(1/k*(room.y_bottom - num1_y) + num1_x - room.x_right) < 0 
+					&& (room.y_top - min(num1_top, num2_top))*(room.y_top - max(num1_bottom, num2_bottom)) < 0 && ((room.x_left+room.x_right)/2 - num1_x) * ((room.x_left+room.x_right)/2 - num2_x) < 0 ) || 
+					( (1/k*(room.y_bottom - num1_y) + num1_x - room.x_left)*(1/k*(room.y_top - num1_y) + num1_x - room.x_right) < 0 
+					&& (room.y_bottom - min(num1_top, num2_top))*(room.y_bottom - max(num1_bottom, num2_bottom)) < 0 && ((room.x_left+room.x_right)/2 - num1_x) * ((room.x_left+room.x_right)/2 - num2_x) < 0 ) ){
+
+					if(flag){
+						graph->a.push_back({});
+						Final.push_back(room);
+						flag = 0;
+						n++;
+						num++;
+					}
+					else{
+						//continue;
+						printf("Got Ya! %d  \n", num-1);
+					}
+
+					graph->addEdge(*it, (char)num-1);
+					graph->a[*it].remove(i);
+					graph->a[*it].unique();
+
+					graph->a[(char)num-1].push_back(i);
+					*it = (char)num-1;
+
+
+					it_end = graph->a[i].end();
+
+				}
+				
+			}
+			graph->a[i].unique();
+
+
+		}
+	}
+	graph->a[num-1].unique();
+	num = Final.size();
+
+	/*
 	for(Room room: list){
 		flag = 1;
 		for(int i = 0; i < num; i++){
@@ -418,7 +481,9 @@ void RoomList::AddWalkRooms(){
 			if( ((room.x_left+room.x_right)/2 - num1_x)*((room.x_left+room.x_right)/2 - num2_x) < 0 &&  
 			((room.y_top+room.y_bottom)/2 - num1_y)*((room.y_top+room.y_bottom)/2 - num2_y) < 0  && 
 			((k*(room.x_left - num1_x) + num1_bottom - room.y_top)*(k*(room.x_left - num1_x) + num1_top- room.y_bottom) < 0 ||
-				(k*(room.x_right - num1_x) + num1_bottom - room.y_top)*(k*(room.x_right - num1_x) + num1_top - room.y_bottom) < 0)){
+				(k*(room.x_right - num1_x) + num1_bottom - room.y_top)*(k*(room.x_right - num1_x) + num1_top - room.y_bottom) < 0 || 
+				(1/k*(room.y_top - num1_y) + num1_right - room.x_left)*(1/k*(room.y_top - num1_y) + num1_left- room.x_right) < 0 ||
+				(1/k*(room.y_bottom - num1_y) + num1_right - room.x_left)*(1/k*(room.y_bottom - num1_y) + num1_left - room.x_right) < 0 ) ){
 				if(flag){
 				graph->a.push_back({});
 				Final.push_back(room);
@@ -426,7 +491,9 @@ void RoomList::AddWalkRooms(){
 				n++;
 				num++;
 				}
-				
+				else{
+					printf("Got Ya! %d  \n", num-1);
+				}
 
 				
 				graph->addEdge(*it, (char)num-1);
@@ -445,12 +512,15 @@ void RoomList::AddWalkRooms(){
 		 	
 			}
 			graph->a[i].unique();
+
 			
 		}
 	}
 	graph->a[num-1].unique();
 	num = Final.size();
 
+
+	*/
 	double y1;
 	double y2;
 
@@ -460,6 +530,8 @@ void RoomList::AddWalkRooms(){
 	менье этого размера, обращаюсь с ними как с прямой */
 	
 	num = Final.size();
+
+	//return;
 	
 	// Здесь монтирую двери
 	
