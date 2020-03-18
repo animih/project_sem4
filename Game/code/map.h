@@ -1,12 +1,21 @@
+#pragma once
+
 #include <SFML/Graphics.hpp>
 #include <list>
+//#include "Entity.h"
 
+#define num_in_x (list->Final[index].x_right+list->Final[index].x_left)/2
+#define num_in_y (list->Final[index].y_top+list->Final[index].y_bottom)/2
 
+#define num_u_x (list->Final[u].x_right+list->Final[u].x_left)/2
+#define num_u_y (list->Final[u].y_top+list->Final[u].y_bottom)/2
+
+#define WIDTH 4*640
+#define HEIGHT 4*480
 
 using namespace sf;
 
-const int WIDTH = 840;
-const int HEIGHT = 680;
+class Entity;
 
 // Это класс комнаты с базовыми функциями движения и прорисовки
 
@@ -14,6 +23,8 @@ const int HEIGHT = 680;
 
 /* Нужно опнимать, что сокрости здесь - чисто номинальные переменные для движения,
 писать полноценные дифуры на ускорения - затратная задача*/
+
+class RoomList;
 
 class Room{
 
@@ -24,6 +35,8 @@ class Room{
 
 	friend class RoomList; // Ну а куда в мире без друзей?
 	friend class Player;
+
+	friend void map_check(Entity *mob, RoomList * list);
 
 	public:
 	Room(double x_left, double x_right, double y_top, double y_bottom);
@@ -55,11 +68,12 @@ class RoomList{
 
 	int average;
 	
-
+	friend void map_check(Entity *mob, RoomList * list);
 	friend class Player;
 
 	public:
 		int help = -1;
+		double * make_map(int , int , int, RenderWindow * window);
 		void generate_rooms(int radius, int average, int total_number);
 		bool push_rooms(float time);
 		void update(RenderWindow * window);
@@ -69,26 +83,6 @@ class RoomList{
 		void BuildTree();
 		void DrawTree(RenderWindow * window);
 		void AddWalkRooms();
+		//void Graph_colouring();
 
-};
-
-
-class Player{
-
-	double x, y;
-	double speed = 0.15;
-	double dir_x = 0;
-	double dir_y = 0;
-
-
-
-	int index;
-	RoomList * list;
-
-public:
-	bool cheet = 0;
-	Player(RoomList *);
-	void add_dir(double, double);
-	void update(RenderWindow * window, float time);
-	
 };

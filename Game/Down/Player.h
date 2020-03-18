@@ -13,7 +13,6 @@ public:
 
 Player::Player(std::string F, float X, float Y, float W, float H) : Entity::Entity(F, X, Y, W, H) {
 };
-
 void Player::update(float time, sf::RenderWindow *window)
 {
 	sf::Vector2i pixelPos = sf::Mouse::getPosition(*window);//считывает координаты курсора

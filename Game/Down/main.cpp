@@ -5,6 +5,7 @@
 #include <cmath>
 #include <SFML/Graphics.hpp>
 #include "lib.h"
+#include "hero.h"
 
 
 int main(int argc, char * argv[]){
@@ -121,6 +122,10 @@ int main(int argc, char * argv[]){
     
     int counter = 0;
 
+    std::string hero = "heroForRotate.png";
+    Player arrow(hero, 200, 200, 136, 74);
+    arrow.setSpeed(0.25);
+
     while(window.isOpen())
     {
     	
@@ -171,9 +176,22 @@ int main(int argc, char * argv[]){
 
         if(draw)
             Rooms.DrawEdges(&window);
+
+        map_check(&arrow, &window);
+
+        view.setCenter(arrow.x, arrow.y);
+        window.setView(view);
+
+        arrow.sprite.setPosition(arrow.x, arrow.y);
+        window.draw(arrow.sprite);
+        window.display();
+
+        window.draw(arrow.sprite);
+        view.setCenter(arrow.x, arrow.y);
+        window.setView(view);
             
         GG.update(&window, time);
-
+        arrow.update(time, &window);
 
 
         window.display();

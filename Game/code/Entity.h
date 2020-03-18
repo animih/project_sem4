@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <cmath>
+#include <list>
 
 class Entity
 {
@@ -11,21 +12,22 @@ protected:
 	float dX, dY;
 public:
 	int w, h;
-	float speed;//текущая скорость
-	sf::FloatRect collisionbox;//границы персонажа (квадрат)
-	float x, y, dx ,dy;//координаты и последние их изменение
-	std::string file;//файл с картинкой
+	float speed;//ГІГҐГЄГіГ№Г Гї Г±ГЄГ®Г°Г®Г±ГІГј
+	sf::FloatRect collisionbox;//ГЈГ°Г Г­ГЁГ¶Г» ГЇГҐГ°Г±Г®Г­Г Г¦Г  (ГЄГўГ Г¤Г°Г ГІ)
+	float x, y, dx ,dy;//ГЄГ®Г®Г°Г¤ГЁГ­Г ГІГ» ГЁ ГЇГ®Г±Г«ГҐГ¤Г­ГЁГҐ ГЁГµ ГЁГ§Г¬ГҐГ­ГҐГ­ГЁГҐ
+	std::string file;//ГґГ Г©Г« Г± ГЄГ Г°ГІГЁГ­ГЄГ®Г©
 	sf::Image image;
 	sf::Texture texture;
 	sf::Sprite sprite;
 	Entity(std::string F, float X, float Y, float W, float H);
 	Entity();
-	void update(float time, sf::RenderWindow window);//меняет х и у, но не перемещает спрайт и не рисует 
-	void setAngle(int dx, int dy);//задает угол поворота
-	float getAngleR();//возвращает угол поворота в радианах
-	float getAngleD();//возвращает угол поворота в градусах
-	void setSpeed(float speed);//меняет 
+	void update(float time, sf::RenderWindow window);//Г¬ГҐГ­ГїГҐГІ Гµ ГЁ Гі, Г­Г® Г­ГҐ ГЇГҐГ°ГҐГ¬ГҐГ№Г ГҐГІ Г±ГЇГ°Г Г©ГІ ГЁ Г­ГҐ Г°ГЁГ±ГіГҐГІ 
+	void setAngle(int dx, int dy);//Г§Г Г¤Г ГҐГІ ГіГЈГ®Г« ГЇГ®ГўГ®Г°Г®ГІГ 
+	float getAngleR();//ГўГ®Г§ГўГ°Г Г№Г ГҐГІ ГіГЈГ®Г« ГЇГ®ГўГ®Г°Г®ГІГ  Гў Г°Г Г¤ГЁГ Г­Г Гµ
+	float getAngleD();//ГўГ®Г§ГўГ°Г Г№Г ГҐГІ ГіГЈГ®Г« ГЇГ®ГўГ®Г°Г®ГІГ  Гў ГЈГ°Г Г¤ГіГ±Г Гµ
+	void setSpeed(float speed);//Г¬ГҐГ­ГїГҐГІ 
 	void setCollision(int x, int y, int w, int h);
+	int index; // РїРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ РЅРѕРјРµСЂР° РєРѕРјРЅР°С‚С‹
 };
 
 Entity::Entity(std::string F, float X, float Y, float W, float H) {
@@ -65,3 +67,7 @@ void Entity::setSpeed(float speed) {
 void Entity::setCollision(int x, int y, int w, int h) {
 	collisionbox = sf::FloatRect(x - w / 2, y - h / 2, w, h);
 };
+
+
+
+
