@@ -16,6 +16,11 @@ double * RoomList::make_map(int radius, int average, int total_number, RenderWin
 	Clock clock;
 	Event event;
 
+    sf::View view;
+    view.reset(sf::FloatRect(0, 0, WIDTH, HEIGHT));
+
+    window->setView(view);
+
 	double timer = 0;
 
 	while(window->isOpen()){
@@ -37,13 +42,14 @@ double * RoomList::make_map(int radius, int average, int total_number, RenderWin
 
 		timer += time/1000;
 
-        if(timer >= 2){
+        if(timer >= 3.5){
         	break;
         	
         }
 		
 		
         window->clear();
+        
 		this->update(window);
 
 		window->display();
@@ -67,11 +73,12 @@ double * RoomList::make_map(int radius, int average, int total_number, RenderWin
 
         timer += time/1000;
 
-        if(timer >= 0.2){
+        if(timer >= 1.2){
         	break;
         }
 
         window->clear();
+        
         
         this->DrawEdges(window);
 
@@ -95,7 +102,7 @@ double * RoomList::make_map(int radius, int average, int total_number, RenderWin
 
         timer += time/1000;
 
-        if(timer >= 0.2){
+        if(timer >= 1.2){
         	break;
         }
 
@@ -121,12 +128,13 @@ double * RoomList::make_map(int radius, int average, int total_number, RenderWin
 
         timer += time/1000;
 
-        if(timer >= 0.2){
+        if(timer >= 2.5){
         	break;
         }
 
         window->clear();
         
+
         this->DrawEdges(window);
 
         window->display();

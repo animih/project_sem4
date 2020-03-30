@@ -38,7 +38,10 @@ class Room{
 
 	friend void map_check(Entity *mob, RoomList * list);
 
+	int color = 0;
+
 	public:
+	bool outline = 0;
 	Room(double x_left, double x_right, double y_top, double y_bottom);
 	void move(float time);
 	void upd(RenderWindow * window);
@@ -53,11 +56,11 @@ void random_size(int average, int* size);
 // В чём я храню граф:
 
 class Graph{
-	char V;
+	int V;
 	public:
-		std::vector < std::list < char > > a;
-		Graph(char V);
-		void addEdge(char u, char w);
+		std::vector < std::list < int > > a;
+		Graph(int V);
+		void addEdge(int u, int w);
 };
 
 class RoomList{

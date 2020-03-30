@@ -13,35 +13,32 @@ void map_check(Entity *mob, RoomList * list) {
 
     int index = mob->index;
 
+    bool helper = 0;
 
-    for (char u : list->graph->a[index]){
-        
-        if(mob->x <= list->Final[u].x_right+2 &&  mob->x >= list->Final[u].x_left-2
-        &&  mob->y <= list->Final[u].y_bottom+2 &&  mob->y >= list->Final[u].y_top-2){
-            mob->index = u;
-            return;
-        }
-        if(u < list->help && index < list->help && index){
-            vect_x = mob->x - num_in_x;
-            vect_y = mob->y - num_in_y;
+    // Кусок просто для отладки.
 
-            vect_x -= (vect_x*(num_u_x-num_in_x) + vect_y*(num_u_y-num_in_y))/
-                ((num_u_x-num_in_x)*(num_u_x-num_in_x) + (num_u_y-num_in_y)* (num_u_y-num_in_y))*(num_u_x-num_in_x);
-            vect_y -= (vect_x*(num_u_x-num_in_x) + vect_y*(num_u_y-num_in_y))/
-                ((num_u_x-num_in_x)*(num_u_x-num_in_x) + (num_u_y-num_in_y)* (num_u_y-num_in_y))*(num_u_y-num_in_y);
+    
+    printf("\n This: %d Nein: ", index);
+                for(int v: list->graph->a[index])
+                    printf("%d ", v);
+    
 
-            
+    for (int u : list->graph->a[index]){
 
-            if(vect_x*vect_x + vect_y*vect_y < 64 && (mob->x-num_in_x)*(mob->x-num_u_x) < 0)            
-                return;
-        }
-        
+        list->Final[u].outline = 1;
+
+        if( mob->y <= list->Final[u].y_bottom &&  mob->y >= list->Final[u].y_top && 
+                mob->x <= list->Final[u].x_right &&  mob->x >= list->Final[u].x_left){
+                mob->index = u;
+            }
     }
 
-    
+    if(mob->cheat){
+        return;
+    }
     
     if(mob->x > list->Final[index].x_right || mob->x < list->Final[index].x_left){
-        mob->x -= mob->dx;
+       mob->x -= mob->dx;
     }
     
     if(mob->y > list->Final[index].y_bottom || mob->y < list->Final[index].y_top){
@@ -68,7 +65,7 @@ int main()
     double * a = new double[2];
     RoomList Rooms;
                         // Радиус распредления, средний размер и число комнат
-    a = Rooms.make_map(50, 125, 75, &window); // Возвращает координаты комнаты 
+    a = Rooms.make_map(50, 125, 95, &window); // Возвращает координаты комнаты 
 
     
     std::string hero = "resources/images/heroForRotate.png";

@@ -51,9 +51,39 @@ void Room::upd(RenderWindow * window){
 	RectangleShape room(sf::Vector2f(x_right-x_left, y_bottom-y_top));
 
 	room.setPosition(x_left, y_top);
- 	room.setFillColor(sf::Color(23, 23, 23));
+
+
+	switch(color){
+		case 0:
+			room.setFillColor(sf::Color(23, 23, 23));
+			break;
+		case 1:
+			room.setFillColor(sf::Color::Blue);
+			break;
+		case 2:
+			room.setFillColor(sf::Color::Green);
+			break;
+		case 3:
+			room.setFillColor(sf::Color::Yellow);
+			break;
+		case 4:
+			room.setFillColor(sf::Color::Cyan);
+			break;
+		case 5:
+			room.setFillColor(sf::Color::White);
+			break;
+		case 6:
+			room.setFillColor(sf::Color(101, 63, 65));
+
+	}
  	room.setOutlineThickness(2);
  	room.setOutlineColor(sf::Color(255, 255, 255));
+
+ 	if(outline){
+ 		room.setOutlineColor(sf::Color::Red);
+ 		outline = 0;
+ 	}
+
  	window->draw(room);
 
 }
@@ -91,12 +121,12 @@ void random_size(int average, int* size){
 }
 
 
-Graph::Graph(char V){
+Graph::Graph(int V){
 	this->V = V;
 	for(int i =0; i < V; i++)
 	a.push_back({});
 }
-void Graph::addEdge(char u, char v){
+void Graph::addEdge(int u, int v){
 	a[u].push_back(v);
 	a[v].push_back(u);
 }

@@ -28,6 +28,7 @@ public:
 	void setSpeed(float speed);//ìåíÿåò 
 	void setCollision(int x, int y, int w, int h);
 	int index; // переменная для номера комнаты
+	bool cheat = 0; // чит-код для ноклипа
 };
 
 Entity::Entity(std::string F, float X, float Y, float W, float H) {

@@ -39,6 +39,13 @@ void Player::update(float time, sf::RenderWindow *window)
 		this->speed = this->initspeed;
 		this->dX = 1;
 	};
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)){
+		this->cheat = 1;
+	}
+	else
+		this->cheat = 0;
+
+
 	if ((dX!=0)&&(dY!=0)) { this->speed = this->speed / sqrt(2); };
 	this->dx = this->dX * speed * time;
 	this->dy = this->dY * speed * time;

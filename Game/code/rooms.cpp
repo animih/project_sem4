@@ -114,6 +114,8 @@ void RoomList::update(RenderWindow * window){
 
 void RoomList::generate_rooms(int radius, int average, int total_number){
 
+	srand(1);
+
 	double * coord = (double*)malloc(2*sizeof(double));
 	int * size = (int*)malloc(2*sizeof(int));
 
@@ -204,52 +206,20 @@ void RoomList::DrawEdges(RenderWindow * window){
 
 	auto color = sf::Color::White;
 
+	for(int i = 0; i < Final.size(); i++){
+		Final[i].upd(window);
+	}
+
+	
 	for(int i = 0; i < Final.size()-1; i++){
 		line[0].position =  sf::Vector2f((Final[i].x_left+Final[i].x_right)/2, 
 			(Final[i].y_bottom+Final[i].y_top)/2);
-		for(char u : graph->a[i]){
+		for(int u : graph->a[i]){
 			if(u == i){
-				printf("erro \n"); //Просто проверка на случай если мы сделали цикл на один узел (я забыл как называется)
+				printf("error. Cycle detected \n"); //Просто проверка на случай если мы сделали цикл
 				exit(0);
 			}
 			if(u > i){
-
-				if(u < help && i < help){
-
-					int k = (Final[u].y_bottom + Final[u].y_top - Final[i].y_top - Final[i].y_bottom) / (Final[u].x_left + Final[u].x_right - Final[i].x_left - Final[i].x_right);
-
-					// Собственно вектор номрали (ненормированный) это (-k, 1)
-
-					std::vector<double> norm = {-k/sqrt(k*k+1*1), 1/sqrt(k*k+1*1)};
-
-					sf::VertexArray line_new(sf::LineStrip, 5);
-					line_new[0].position = sf::Vector2f((Final[u].x_left+Final[u].x_right)/2-norm[0]*4, 
-				(Final[u].y_bottom+Final[u].y_top)/2-norm[1]*4);
-
-					line_new[1].position = sf::Vector2f((Final[u].x_left+Final[u].x_right)/2+norm[0]*4, 
-				(Final[u].y_bottom+Final[u].y_top)/2+norm[1]*4);
-					
-					line_new[2].position = sf::Vector2f((Final[i].x_left+Final[i].x_right)/2+norm[0]*4, 
-				(Final[i].y_bottom+Final[i].y_top)/2+norm[1]*4);
-
-
-					line_new[3].position = sf::Vector2f((Final[i].x_left+Final[i].x_right)/2-norm[0]*4, 
-				(Final[i].y_bottom+Final[i].y_top)/2-norm[1]*4);
-
-					line_new[4].position = sf::Vector2f((Final[u].x_left+Final[u].x_right)/2-norm[0]*4, 
-				(Final[u].y_bottom+Final[u].y_top)/2-norm[1]*4);
-
-					line_new[0].color = sf::Color::Green;
-					line_new[1].color = sf::Color::Green;
-					line_new[2].color = sf::Color::Green;
-					line_new[3].color = sf::Color::Green;
-					line_new[4].color = sf::Color::Green;
-
-
-					window->draw(line_new);
-
-					continue;
-				}
 				
 				line[1].position =  sf::Vector2f((Final[u].x_left+Final[u].x_right)/2, 
 				(Final[u].y_bottom+Final[u].y_top)/2);
@@ -260,25 +230,22 @@ void RoomList::DrawEdges(RenderWindow * window){
 			
 		}
 	}
-
-	for(int i = 0; i < Final.size(); i++){
-		Final[i].upd(window);
-	}
-
+	
 	
 }
+
 
 /* 
 	Короче, дальше на подходе алгоритм Прима
 	Перовначально, я писал его через кучу (отсюда и название pop_min)
 	Но, как оказалось, из-за одной микроштуки там всё равно скорость о(n)
 	Так что я переписал всё под массив
-	НУ а хуле нам, физикам.
+	НУ а хуле нам.
 */
 
-char pop_min(double * weight, int number){
-	char k = 0;
-	for(char i =0; i < number; i++){
+int pop_min(double * weight, int number){
+	int k = 0;
+	for(int i =0; i < number; i++){
 		if(weight[k] == -1. || weight[i] < weight[k] && weight[i] >= 0){
 			k = i;
 		}
@@ -301,7 +268,7 @@ void RoomList::BuildTree(){
 	int * parrent = new int[number];
 
 
-	std::vector<char> res = {};
+	std::vector<int> res = {};
 
 
 	for(int i = 0; i< number; i++){
@@ -310,13 +277,13 @@ void RoomList::BuildTree(){
 	}
 
 	weight[0] = 0;
-	char v = pop_min(weight, number);
+	int v = pop_min(weight, number);
 
-	char flag = 1;
+	int flag = 1;
 	float ran;
 
 	while(flag!= number){
-		for(char u : graph->a[v]){
+		for(int u : graph->a[v]){
 
 			if(weight[u] < 0){
 				continue;
@@ -362,7 +329,7 @@ void RoomList::BuildTree(){
 	for(int i = 0; i<number; i+=5){
 		//while(std::find(visited.begin(), visited.end(), n) != visited.end()) // ТУт проблема - почему-то работает лучше без исключения повтора (?!). Скорей всего я - лох
 		n = rand()%number;
-		for(char k: graph->a[n]){
+		for(int k: graph->a[n]){
 			if(parrent[k] == n || parrent[n] == k){
 				continue;
 			}
@@ -383,7 +350,7 @@ void RoomList::BuildTree(){
 	free(graph);
 	graph = new Graph(number);
 
-	for(char i = 0; i <res.size(); i+=2){
+	for(int i = 0; i <res.size(); i+=2){
 		graph->addEdge(res[i], res[i+1]);
 	}
 
@@ -400,7 +367,6 @@ double max(double a, double b){
 }
 
 
-
 void RoomList::AddWalkRooms(){
 	
 	double k;
@@ -410,10 +376,15 @@ void RoomList::AddWalkRooms(){
 	int n = 0;
 	int flag = 0;
 
+	for(int i = 0; i < num; i++){
+		graph->a[i].sort();
+		graph->a[i].unique();
+	}
+
 
 	// Переписать блять!
 	
-
+	
 	for(Room room: list){
 		flag = 1;
 		for(int i = 0; i < num; i++){
@@ -440,12 +411,12 @@ void RoomList::AddWalkRooms(){
 						num++;
 					}
 
-					graph->addEdge(*it, (char)num-1);
+					graph->addEdge(*it, (int)num-1);
 					graph->a[*it].remove(i);
 					graph->a[*it].unique();
 
-					graph->a[(char)num-1].push_back(i);
-					*it = (char)num-1;
+					graph->a[(int)num-1].push_back(i);
+					*it = (int)num-1;
 
 
 					it_end = graph->a[i].end();
@@ -458,291 +429,601 @@ void RoomList::AddWalkRooms(){
 
 		}
 	}
+	
 	graph->a[num-1].unique();
 	num = Final.size();
 
-	/*
-	for(Room room: list){
-		flag = 1;
-		for(int i = 0; i < num; i++){
-
-
-			auto it_end =  graph->a[i].end();
-
-		for(auto it = graph->a[i].begin(); it != it_end; ++it){
-			
-
-			k = (num1_y - num2_y)/(num1_x - num2_x);
-			if( ((room.x_left+room.x_right)/2 - num1_x)*((room.x_left+room.x_right)/2 - num2_x) < 0 &&  
-			((room.y_top+room.y_bottom)/2 - num1_y)*((room.y_top+room.y_bottom)/2 - num2_y) < 0  && 
-			((k*(room.x_left - num1_x) + num1_bottom - room.y_top)*(k*(room.x_left - num1_x) + num1_top- room.y_bottom) < 0 ||
-				(k*(room.x_right - num1_x) + num1_bottom - room.y_top)*(k*(room.x_right - num1_x) + num1_top - room.y_bottom) < 0 || 
-				(1/k*(room.y_top - num1_y) + num1_right - room.x_left)*(1/k*(room.y_top - num1_y) + num1_left- room.x_right) < 0 ||
-				(1/k*(room.y_bottom - num1_y) + num1_right - room.x_left)*(1/k*(room.y_bottom - num1_y) + num1_left - room.x_right) < 0 ) ){
-				if(flag){
-				graph->a.push_back({});
-				Final.push_back(room);
-				flag = 0;
-				n++;
-				num++;
-				}
-				else{
-					printf("Got Ya! %d  \n", num-1);
-				}
-
-				
-				graph->addEdge(*it, (char)num-1);
-				graph->a[*it].remove(i);
-
-				graph->a[(char)num-1].push_back(i);
-				*it = (char)num-1;
-
-
-				it_end = graph->a[i].end();
-				
-				
-				
-
-				}
-		 	
-			}
-			graph->a[i].unique();
-
-			
-		}
+	for(int i = 0; i < graph->a.size(); i++){
+		graph->a[i].sort();
+		graph->a[i].unique();
 	}
-	graph->a[num-1].unique();
-	num = Final.size();
+
+	int color;
+	bool flag2;
+
+	// красим комнаты
+
+	for(int i = 0; i < num; i++){
+		color = rand()%4+1;
+		if(graph->a[i].size() > 3){
+			Final[i].color = 5;
+			continue;
+		}
+		else
+			while(1){
+				flag2 = 1;
+				for(int u : graph->a[i]){
+					if(Final[u].color == color){
+						color = rand()%4+1;
+						flag2 = 0;
+						break;
+					}
+				}
+				if(flag2){
+					break;
+				}
+			}
+		//printf("%d ", color);
+		Final[i].color = color;
+
+	}
 
 
-	*/
+	help = num; /* число комнат */
+
+
+	double x;
+
 	double y1;
 	double y2;
 
+	// Строю коридоры
+	
+	for(int i = 0; i < num; i++){
+		auto it_end = graph->a[i].end();
+		for(auto it = graph->a[i].begin(); it != it_end; ++it){
+			if(*it>= help){
+				continue;
+			}
+			if(num2_x - 5*average/45. > num1_left && num2_x + 5*average/45. < num1_right){
+				if(fabs(num1_top - num2_bottom) <= 12 ||  fabs(num1_bottom - num2_top) <= 12){
+					continue;
+				}
 
-	help = num; /* Для диагоналяных коридоров я исопльзую след костыль - 
-	записываю куда-то значение числа комнат, док оридоров и потом, еслив стречаю ребро соединящее узлы
-	менье этого размера, обращаюсь с ними как с прямой */
-	
-	num = Final.size();
+				x = (num2_x + num1_x)/2;
 
-	//return;
+				if(num1_top > num2_bottom){
+					y1 = num1_top;
+					y2 = num2_bottom;
+				}
+				else{
+					y1 = num2_top;
+					y2 = num1_bottom;
+				}
+
+				Final.push_back(Room(x-5*average/45, x+5*average/45, y2+4, y1-4));
+				graph->a.push_back({});
+
+				graph->addEdge(*it, (int)Final.size()-1);
+				graph->a[*it].remove(i);
+
+				graph->a[(int)Final.size()-1].push_back(i);
+				*it = (int)Final.size()-1;
+
+
+				it_end = graph->a[i].end();
+				continue;
+			}
+			if(num2_left - 5*average/45. > num1_left && num2_left + 5*average/45. < num1_right){
+				if(fabs(num1_top - num2_bottom) <= 12 ||  fabs(num1_bottom - num2_top) <= 12){
+					continue;
+				}
+
+				x = (num2_left + num1_right)/2;
+
+				if(num1_top > num2_bottom){
+					y1 = num1_top;
+					y2 = num2_bottom;
+				}
+				else{
+					y1 = num2_top;
+					y2 = num1_bottom;
+				}
+
+				Final.push_back(Room(x-5*average/45, x+5*average/45, y2+4, y1-4));
+				graph->a.push_back({});
+
+				graph->addEdge(*it, (int)Final.size()-1);
+				graph->a[*it].remove(i);
+
+				graph->a[(int)Final.size()-1].push_back(i);
+				*it = (int)Final.size()-1;
+
+
+				it_end = graph->a[i].end();
+				continue;
+			}
+
+
+		}
+
+	}
+
+
 	
-	// Здесь монтирую двери
+
+	for(int i = 0; i < num; i++){
+		auto it_end = graph->a[i].end();
+		for(auto it = graph->a[i].begin(); it != it_end; ++it){
+			if(*it>= help){
+				continue;
+			}
+			if(num2_y - 5*average/45. > num1_top && num2_y + 5*average/45. < num1_bottom){
+				if(fabs(num1_left - num2_right) <= 12 ||  fabs(num1_right - num2_left) <= 12){
+					continue;
+				}
+
+				x = (num2_y + num1_y)/2;
+
+				if(num1_left > num2_right){
+					y1 = num2_right;
+					y2 = num1_left;
+				}
+				else{
+					y1 = num1_right;
+					y2 = num2_left;
+				}
+
+				Final.push_back(Room(y1+4, y2-4, x-5*average/45, x+5*average/45));
+				graph->a.push_back({});
+
+				graph->addEdge(*it, (int)Final.size()-1);
+				graph->a[*it].remove(i);
+
+				graph->a[(int)Final.size()-1].push_back(i);
+				*it = (int)Final.size()-1;
+
+
+				it_end = graph->a[i].end();
+				continue;
+			}
+			if(num2_top - 5*average/45. > num1_top && num2_top + 5*average/45. < num1_bottom){
+				if(fabs(num1_left - num2_right) <= 12 ||  fabs(num1_right - num2_left) <= 12){
+					continue;
+				}
+
+				x = (num2_top + num1_bottom)/2;
+
+				if(num1_left > num2_right){
+					y1 = num2_right;
+					y2 = num1_left;
+				}
+				else{
+					y1 = num1_right;
+					y2 = num2_left;
+				}
+
+				Final.push_back(Room(y1+4, y2-4, x-5*average/45, x+5*average/45));
+				graph->a.push_back({});
+
+				graph->addEdge(*it, (int)Final.size()-1);
+				graph->a[*it].remove(i);
+
+				graph->a[(int)Final.size()-1].push_back(i);
+				*it = (int)Final.size()-1;
+
+
+				it_end = graph->a[i].end();
+				continue;
+			}
+
+
+		}
+
+	}
+
+	for(int i = 0; i < graph->a.size(); i++){
+		graph->a[i].sort();
+		graph->a[i].unique();
+	}
 	
+	//Решаем вопросик с диагоналями
+	
+	int num_o = Final.size();
+
+	double x_add;
+	double y_add; 
+
 	for(int i = 0; i < help; i++){
 		auto it_end = graph->a[i].end();
 		for(auto it = graph->a[i].begin(); it != it_end; ++it){
-			if(*it >= help){
+			if(*it>= help){
 				continue;
 			}
-			if(num1_left - num2_right < 14 && num1_left - num2_right > 0){
 
-				if(num1_y > num2_top+4 && num1_y < num2_bottom -4){
-					y1 = num1_y;
+			if(num2_y - 5*average/45. > num1_top && num2_y + 5*average/45. < num1_bottom){
+				continue;
+			}
+
+			if(num2_bottom - 5*average/45. > num1_top && num2_bottom + 5*average/45. < num1_bottom){
+				continue;
+			}
+			if(num2_top - 5*average/45. > num1_top && num2_top + 5*average/45. < num1_bottom){
+				continue;
+			}
+
+			if(num2_x - 5*average/45. > num1_left && num2_x + 5*average/45. < num1_right){
+				continue;
+			}
+
+			if(num2_left - 5*average/45. > num1_left && num2_left + 5*average/45. < num1_right){
+				continue;
+			}
+			if(num2_right - 5*average/45. > num1_left && num2_right + 5*average/45. < num1_right){
+				continue;
+			}
+
+
+			if((num1_right+5*average/45. > num2_left && num1_right+5*average/45. < num2_right)
+			 && (num1_top < num2_top || num1_top > num2_bottom)
+			 && (num1_bottom < num2_top || num1_bottom > num2_bottom)
+			 && (num1_top-num2_bottom)*(num1_bottom-num2_bottom) > 0 ){
+				if(fabs(num1_top - num2_bottom) <= 12 ||  fabs(num1_bottom - num2_top) <= 12){
+					continue;
 				}
-				else if(num1_top > num2_top+3 && num1_top < num2_bottom -3){
 
-					y1 = (num1_top+num2_bottom)/2;
-
-				}
-				else if(num1_bottom > num2_top+3 && num1_bottom < num2_bottom -3){
-					
-					y1 = (num1_bottom+num2_top)/2;
-
+				x_add = num1_right+5*average/45.;
+				if(num1_bottom < num2_top){
+					y_add = num1_bottom-5*average/45.;
 				}
 				else{
+					y_add = num1_top + 5*average/45.;
+				}
+				Final.push_back(Room(x_add-5*average/45.+4, x_add+5*average/45., y_add-5*average/45.+4, y_add+5*average/45.-4));
+				graph->a.push_back({});
+
+				graph->addEdge(*it, (int)Final.size()-1);
+				graph->a[*it].remove(i);
+
+				graph->a[(int)Final.size()-1].push_back(i);
+				*it = (int)Final.size()-1;
+
+				it_end = graph->a[i].end();
+
+				continue;
+			}
+
+			if((num1_left+5*average/45. > num2_left && num1_left+5*average/45. < num2_right)
+				&& (num1_top < num2_top || num1_top > num2_bottom)
+				&& (num1_bottom < num2_top || num1_bottom > num2_bottom)
+				&& (num1_top-num2_bottom)*(num1_bottom-num2_bottom) > 0 ){
+				if(fabs(num1_top - num2_bottom) <= 12 ||  fabs(num1_bottom - num2_top) <= 12){
+					continue;
+				}
+				x_add = num1_left - 5*average/45.;
+				if(num1_bottom < num2_top){
+					y_add = num1_bottom - 5*average/45.;
+				}
+				else{
+					y_add = num1_top + 5*average/45.;
+				}
+				Final.push_back(Room(x_add-5*average/45., x_add+5*average/45.-4, y_add-5*average/45.+4, y_add+5*average/45.-4));
+				graph->a.push_back({});
+
+				graph->addEdge(*it, (int)Final.size()-1);
+				graph->a[*it].remove(i);
+
+				graph->a[(int)Final.size()-1].push_back(i);
+				*it = (int)Final.size()-1;
+
+				it_end = graph->a[i].end();
+
+				continue;
+			}
+
+			
+			if((num1_top+5*average/45. > num2_top && num1_top+5*average/45. < num2_bottom)
+				&& (num1_left < num2_left || num1_left > num2_right)
+				&& (num1_right < num2_left || num1_right > num2_right)
+				&& (num1_right - num2_right)*(num1_left - num2_right) > 0
+				){
+				if(fabs(num1_left - num2_right) <= 12 ||  fabs(num1_right - num2_left) <= 12){
+					continue;
+				}
+				y_add = num1_top-5*average/45.;
+				if(num1_right < num2_left){
+					x_add = num1_right-5*average/45.;
+				}
+				else{
+					x_add = num1_left + 5*average/45.;
+				}
+				Final.push_back(Room(x_add-5*average/45.+4, x_add+5*average/45.-4, y_add-5*average/45., y_add+5*average/45.-4));
+				graph->a.push_back({});
+
+				graph->addEdge(*it, (int)Final.size()-1);
+				graph->a[*it].remove(i);
+
+				graph->a[(int)Final.size()-1].push_back(i);
+				*it = (int)Final.size()-1;
+
+				it_end = graph->a[i].end();
+
+				continue;
+			}
+
+			if((num1_bottom+5*average/45. > num2_top && num1_bottom+5*average/45. < num2_bottom)
+				&& (num1_left < num2_left || num1_left > num2_right)
+				&& (num1_right < num2_left || num1_right > num2_right)
+				&& (num1_right - num2_right)*(num1_left - num2_right) > 0
+				){
+				if(fabs(num1_left - num2_right) <= 12 ||  fabs(num1_right - num2_left) <= 12){
+					continue;
+				}
+				y_add = num1_bottom+5*average/45.;
+				if(num1_right < num2_left){
+					x_add = num1_right-5*average/45.;
+				}
+				else{
+					x_add = num1_left + 5*average/45.;
+				}
+				Final.push_back(Room(x_add-5*average/45.+4, x_add+5*average/45.-4, y_add-5*average/45.+4, y_add+5*average/45.));
+				graph->a.push_back({});
+
+				graph->addEdge(*it, (int)Final.size()-1);
+				graph->a[*it].remove(i);
+
+				graph->a[(int)Final.size()-1].push_back(i);
+				*it = (int)Final.size()-1;
+
+				it_end = graph->a[i].end();
+
+				continue;
+			}
+
+			x_add = num1_x;
+			y_add = num2_y;
+
+			bool exit = 0;
+
+			for(int j = 0; j < Final.size(); j++){
+				if(j == i || j == *it){
 					continue;
 				}
 
 
-				Final.push_back(Room(num2_right, num1_left, y1 - 15, y1 + 15));
-				graph->a.push_back({});
 
-				graph->addEdge(*it, (char)Final.size()-1);
-				graph->a[*it].remove(i);
+				if(x_add > Final[j].x_left && x_add < Final[j].x_right && y_add > Final[j].y_top && y_add < Final[j].y_bottom){
+					exit = 1;
+					break;
+				}
+				
+				if((num2_x-Final[j].x_left)*(x_add-Final[j].x_left) < 0 && num1_x < Final[j].y_bottom && num2_y > Final[j].y_top ){
+					exit = 1;
+					break;
+				}
 
-				graph->a[(char)Final.size()-1].push_back(i);
-				*it = (char)Final.size()-1;
+				if((num2_x-Final[j].x_right)*(x_add-Final[j].x_right) < 0 && y_add < Final[j].y_bottom && y_add > Final[j].y_top ){
+					exit = 1;
+					break;
+				}
 
+				if((num1_y-Final[j].y_top)*(y_add-Final[j].y_top) < 0 && x_add < Final[j].x_right && x_add > Final[j].x_left ){
+					exit = 1;
+					break;
+				}
 
-				it_end = graph->a[i].end();
+				if((num1_y-Final[j].y_bottom)*(y_add-Final[j].y_bottom) < 0 && x_add < Final[j].x_right && x_add > Final[j].x_left ){
+					exit = 1;
+					break;
+				}
+				
 
 			}
-			if(num1_top - num2_bottom < 14 && num1_top - num2_bottom > 0){
 
-				if(num1_x > num2_left+4 && num1_x < num2_right -4){
+			if(exit){
+				it_end = graph->a[i].end();
+				//printf("Ouch!");
+				continue;
+			}
+
+
+			Final.push_back(Room(x_add-5*average/45., x_add+5*average/45., y_add-5*average/45., y_add+5*average/45.));
+			graph->a.push_back({});
+
+			graph->addEdge(*it, (int)Final.size()-1);
+			graph->a[*it].remove(i);
+
+			graph->a[(int)Final.size()-1].push_back(i);
+			*it = (int)Final.size()-1;
+
+			it_end = graph->a[i].end();
+
+		}
+	}
+
+	for(int i = 0; i < graph->a.size(); i++){
+		graph->a[i].sort();
+		graph->a[i].unique();
+	}
+
+	// Здесь строю во второй раз коридоры
+
+	num = Final.size();
+
+	for(int i = num_o-1; i < num; i ++){
+		auto it_end = graph->a[i].end();
+		for(auto it = graph->a[i].begin(); it != it_end; ++it){
+			if(*it >= num)
+				continue;
+
+			if(fabs(num2_x - num1_x)<1 || (num1_x > num2_left && num1_x < num2_right && fabs(num1_top-num2_bottom)>4 && fabs(num1_bottom-num2_top)>4 )){
+
+				if(num2_top > num1_bottom)
+					Final.push_back(Room(num1_x-5*average/45., num1_x+5*average/45.,num1_bottom +4 , num2_top-4));
+				else
+					Final.push_back(Room(num1_x-5*average/45., num1_x+5*average/45.,num2_bottom +4 , num1_top-4));
+
+				graph->a.push_back({});
+
+				graph->addEdge(*it, (int)Final.size()-1);
+				graph->a[*it].remove(i);
+
+				graph->a[(int)Final.size()-1].push_back(i);
+				*it = (int)Final.size()-1;
+
+				it_end = graph->a[i].end();
+				continue;
+				
+			}
+			else if(fabs(num2_y - num1_y)<1 || (num1_y > num2_top && num1_y < num2_bottom && fabs(num1_left-num2_right)>4 && fabs(num1_left-num2_right)>4 )){
+
+				if(num2_left > num1_right)
+					Final.push_back(Room(num1_right+4, num2_left-4,num1_y -5*average/45., num1_y +5*average/45.));
+				else
+					Final.push_back(Room(num2_right+4, num1_left-4,num1_y -5*average/45., num1_y +5*average/45.));
+
+				graph->a.push_back({});
+
+				graph->addEdge(*it, (int)Final.size()-1);
+				graph->a[*it].remove(i);
+
+				graph->a[(int)Final.size()-1].push_back(i);
+				*it = (int)Final.size()-1;
+
+				it_end = graph->a[i].end();
+				continue;
+				
+			}
+			else{
+				continue;
+			}
+
+		}
+
+	}
+
+	for(int i = 0; i < graph->a.size(); i++){
+		graph->a[i].sort();
+		graph->a[i].unique();
+	}
+
+	num = Final.size();
+
+	//return;
+	// Здесь монтирую двери
+	
+	printf("here we go ");
+
+	printf("%d \n", num);
+	
+	for(int i = 0; i < num; i++){
+
+		auto it_end = graph->a[i].end();
+		for(auto it = graph->a[i].begin(); it != it_end; ++it){
+			if(*it >= num){
+				it_end = graph->a[i].end();
+				continue;
+			}
+			if(num1_top - num2_bottom <= 12 && num1_top - num2_bottom > 0.01){
+
+				if(num1_x > num2_left+ average/45.*4 && num1_x < num2_right - average/45.*4){
 					y1 = num1_x;
 				}
-				else if(num1_left > num2_left+3 && num1_left < num2_right -3){
+				else if(num2_x > num1_left+ average/45.*4 && num2_x < num1_right - average/45.*4){
+					y1 = num2_x;
+				}
+				else if(num1_left > num2_left+ average/45.*1 && num1_left < num2_right - average/45.*1){
 
 					y1 = (num1_left+num2_right)/2;
 
 				}
-				else if(num1_right > num2_left+3 && num1_right < num2_right -3){
+				else if(num1_right > num2_left+ average/45.*1 && num1_right < num2_right - average/45.*1){
 					
 					y1 = (num1_right+num2_left)/2;
 
 				}
 				else{
+					it_end = graph->a[i].end();
 					continue;
 				}
 
-
-				Final.push_back(Room(y1 - 15, y1 + 15, num2_bottom , num1_top));
+				
+				Final.push_back(Room(y1 - average/45.*5, y1 + average/45.*5, num2_bottom , num1_top));
 				graph->a.push_back({});
 
-				graph->addEdge(*it, (char)Final.size()-1);
+				Final[(int)Final.size()-1].color = 6;
+
+				graph->addEdge(*it, (int)Final.size()-1);
 				graph->a[*it].remove(i);
 
-				graph->a[(char)Final.size()-1].push_back(i);
-				*it = (char)Final.size()-1;
+				graph->a[(int)Final.size()-1].push_back(i);
+				*it = (int)Final.size()-1;
 
-
+				
 				it_end = graph->a[i].end();
-
+				continue;
+				
 			}
 
 		}
 	}
 
-	
-	for(int i = 0; i < help; i++){
+	//return;
+
+	for(int i = 0; i < num; i++){
+
 		auto it_end = graph->a[i].end();
 		for(auto it = graph->a[i].begin(); it != it_end; ++it){
-			if(*it >= help){
+			if(*it >= num){
+				it_end = graph->a[i].end();
 				continue;
 			}
-			if(num1_left + 2 < num2_x && num2_x < num1_right - 2 ){
-				if(fabs(num1_top - num2_bottom) < 6 || 
-					fabs(num2_top - num1_bottom) < 6)
-					continue;
 
-				if(num2_top > num1_bottom){
-					y1 = num1_bottom;
-					y2 = num2_top;
+			if(num1_left - num2_right <= 12 && num1_left - num2_right > 0.01){
+
+				if(num1_y > num2_top+average/45.*4 && num1_y < num2_bottom - average/45.*4){
+					y1 = num1_y;
+				}
+				else if(num2_y > num1_top+average/45.*4 && num2_y < num1_bottom - average/45.*4){
+					y1 = num2_y;
+				}
+				else if(num1_top > num2_top+average/45.*1 && num1_top < num2_bottom - average/45.*1){
+
+					y1 = (num1_top+num2_bottom)/2;
+
+				}
+				else if(num1_bottom > num2_top+average/45.*1 && num1_bottom < num2_bottom -average/45.*1){
+					
+					y1 = (num1_bottom+num2_top)/2;
+
 				}
 				else{
-					y1 = num2_bottom;
-					y2 = num1_top;
-				}
-
-
-				Final.push_back(Room(num2_x - 15, num2_x + 15, y1, y2));
-				graph->a.push_back({});
-
-				graph->addEdge(*it, (char)Final.size()-1);
-				graph->a[*it].remove(i);
-
-				graph->a[(char)Final.size()-1].push_back(i);
-				*it = (char)Final.size()-1;
-
-
-				it_end = graph->a[i].end();
-
-			}
-			else if(num1_top + 2 < num2_y && num2_y < num1_bottom - 2 ){
-				if(fabs(num1_left - num2_right) < 6 || 
-					fabs(num2_left - num1_right) < 6)
+					it_end = graph->a[i].end();
 					continue;
-
-				if(num2_left > num1_right){
-					y1 = num1_right;
-					y2 = num2_left;
-				}
-				else{
-					y1 = num2_right;
-					y2 = num1_left;
 				}
 
-
-				Final.push_back(Room(y1, y2, num2_y - 15, num2_y + 15));
+				
+				Final.push_back(Room(num2_right, num1_left, y1 - average/45.*5, y1 + average/45.*5));
 				graph->a.push_back({});
-
-				graph->addEdge(*it, (char)Final.size()-1);
+				
+				Final[(int)Final.size()-1].color = 6;
+				
+				graph->addEdge(*it, (int)Final.size()-1);
 				graph->a[*it].remove(i);
 
-				graph->a[(char)Final.size()-1].push_back(i);
-				*it = (char)Final.size()-1;
-
+				graph->a[(int)Final.size()-1].push_back(i);
+				*it = (int)Final.size()-1;
+				
 
 				it_end = graph->a[i].end();
+								
+				continue;
 
 			}
 		}
 	}
 
-	//Этап 2 Соединяю сопряжённые по краям комнаты
+	return;
 
-	for(int i = 0; i < help; i++){
-		auto it_end = graph->a[i].end();
-		for(auto it = graph->a[i].begin(); it != it_end; ++it){
-			if(*it >= help){
-				continue;
-			}
-			if(num1_left + 3 < num2_left && num2_left < num1_right - 3 ){
-				if(fabs(num1_top - num2_bottom) < 6 || 
-					fabs(num2_top - num1_bottom) < 6)
-					continue;
-
-				if(num2_top > num1_bottom){
-					y1 = num1_bottom;
-					y2 = num2_top;
-				}
-				else{
-					y1 = num2_bottom;
-					y2 = num1_top;
-				}
-
-
-				Final.push_back(Room((num2_left+num1_right)/2 - 5, (num2_left+num1_right)/2 + 5, y1, y2));
-				graph->a.push_back({});
-
-				graph->addEdge(*it, (char)Final.size()-1);
-				graph->a[*it].remove(i);
-
-				graph->a[(char)Final.size()-1].push_back(i);
-				*it = (char)Final.size()-1;
-
-
-				it_end = graph->a[i].end();
-
-			}
-			else if(num1_top + 3 < num2_bottom && num2_bottom < num1_bottom - 3 ){
-				if(fabs(num1_left - num2_right) < 6 || 
-					fabs(num2_left - num1_right) < 6)
-					continue;
-
-				if(num2_left > num1_right){
-					y1 = num1_right;
-					y2 = num2_left;
-				}
-				else{
-					y1 = num2_right;
-					y2 = num1_left;
-				}
-
-
-				Final.push_back(Room(y1, y2, (num2_bottom+num1_top)/2 - 5, (num2_bottom+num1_top)/2 + 5));
-				graph->a.push_back({});
-
-				graph->addEdge(*it, (char)Final.size()-1);
-				graph->a[*it].remove(i);
-
-				graph->a[(char)Final.size()-1].push_back(i);
-				*it = (char)Final.size()-1;
-
-
-				it_end = graph->a[i].end();
-
-			}
-		}
-	}
-	
-	// Финальный этап. Тут я ебусь с диагональными коридорами
-	
-	
-
-//printf("Done %d", n);
 
 }
