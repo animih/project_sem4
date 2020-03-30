@@ -17,11 +17,11 @@ void map_check(Entity *mob, RoomList * list) {
 
     // Кусок просто для отладки.
 
-    
+    /*
     printf("\n This: %d Nein: ", index);
                 for(int v: list->graph->a[index])
                     printf("%d ", v);
-    
+    */
 
     for (int u : list->graph->a[index]){
 
