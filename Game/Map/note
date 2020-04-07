@@ -1,0 +1,1 @@
+st.cpp room_graph.cpp rooms_first.cpp rooms_second.cpp make_map.cpp -c test -lsfml-graphics -lsfml-window -lsfml-system && ./test
