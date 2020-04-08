@@ -9,7 +9,16 @@ GameState::GameState(sf::RenderWindow * window, std::stack<State *> * states) : 
 	double * a = new double[2];
 	int * b = new int[2];
 	
-	a = map->make_map(b, 32, 70, 355, 70, window);
+	a = map->make_map(b, 32, 120, 355, 90, window, buf);
+
+	//printf("done. %d \n", buf["Lantern"].size());
+
+	if(buf.count("Lantern")!= 0){
+		for(int i = 0; i < buf["Lantern"].size(); i+=2){
+			//printf("Lantern \n");
+			lights.push_back(new Lantern("Lantern.png", buf["Lantern"][i], buf["Lantern"][i+1], 32, 32, map));
+		}
+	}
 
 	std::string hero = "heroForRotate .png";
 
@@ -18,7 +27,7 @@ GameState::GameState(sf::RenderWindow * window, std::stack<State *> * states) : 
 
 
 	view = new View();
-	view->reset(sf::FloatRect(0, 0, 640, 480));
+	view->reset(sf::FloatRect(0, 0, 640*2, 480*2));
 
 }
 
@@ -45,14 +54,20 @@ void GameState::update(const float & dt){
 	this->player->update(dt);
 
 	this->map->check_Spawn(buf, player->x, player->y, window->getSize().x/1.5);
-
-	for(int i = 0; i < buf.size(); i+=2){
-		printf("Zombie added \n");
-		mobs.push_back(new Zombie("zombieForRotate .png", buf[i], buf[i+1], 136, 74, map));
+	if(buf.count("Zombie")!= 0){
+		for(int i = 0; i < buf["Zombie"].size(); i+=2){
+			printf("Zombie added \n");
+			mobs.push_back(new Zombie("zombieForRotate .png", buf["Zombie"][i], buf["Zombie"][i+1], 136, 74, map));
+		}
 	}
 
 	buf.clear();
 	int n = mobs.size();
+
+	for(int i = 0; i < lights.size(); i++){
+		lights[i]->update(dt);
+		lights[i]->React_on(player);
+	}
 
 	for(int i = 0; i < n; i++){
 		//printf("%d ", mobs.size())
@@ -79,11 +94,15 @@ void GameState::render(sf::RenderWindow * window){
 	view->setCenter(player->x, player->y);
 	window->setView(*view);
 
-	this->map->render_region(window, player->x-window->getSize().x/2, player->x+window->getSize().x/2, player->y-window->getSize().y/2, player->y+window->getSize().y/2);
+	this->map->render_region(window, player->x-window->getSize().x, player->x+window->getSize().x, player->y-window->getSize().y, player->y+window->getSize().y, true);
 	this->player->render(window);
 
 	for(int i = 0; i < mobs.size(); i++){
 		mobs[i]->render(window);
+	}
+
+	for(int i = 0; i < lights.size(); i++){
+		lights[i]->render(window);
 	}
 
 }

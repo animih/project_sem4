@@ -376,7 +376,7 @@ void RoomList::AddWalkRooms(){
 	}
 
 
-	// Переписать блять!
+	// Переписать блять! upd: да не, работает вродь.
 	
 	
 	for(Room room: list){

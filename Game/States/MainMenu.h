@@ -4,6 +4,14 @@
 #include "../States/GameState.h"
 #include "../resources/Buttom.h"
 
+/*
+
+	Это главное меню с милой кнопкой
+
+	Больше ничего и не требутся.
+
+*/
+
 class MainMenuState : public State{
 
 	sf::RectangleShape background;

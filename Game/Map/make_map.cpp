@@ -9,7 +9,7 @@
 
 using namespace sf;
 
-double * Map::make_map(int * size, int tile_size, int radius, int average, int number, RenderWindow * window){
+double * Map::make_map(int * size, int tile_size, int radius, int average, int number, RenderWindow * window, std::map<std::string, std::vector<double>> & buf){
 
 	this->tile_size = tile_size;
 
@@ -177,7 +177,7 @@ double * Map::make_map(int * size, int tile_size, int radius, int average, int n
 
     // После гены листы удаляются
 
-    this->Gen_Sur();
+    this->Gen_Sur(buf);
     delete Rooms;
 
     while(window->isOpen()){

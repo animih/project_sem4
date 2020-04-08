@@ -10,11 +10,16 @@ Player::~Player(){
 	delete image;
 }
 
+// Да кста, для игрока читы добавил, но они тут не оч нужны
+
 void Player::update(const float &dt)
 {
 
 	double dX = 0;
 	double dY = 0;
+
+	this->map->update_view_mask(this->x, this->y, 550);
+	this->map->update_player_lighting_mask(this->x, this->y, 250);
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
 		dY = -1;

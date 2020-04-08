@@ -2,18 +2,12 @@
 #define ENTITY_H
 
 # include "../Map/map.h"
-/*
-#include <stdlib.h>
-#include <iostream>
-#include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
-#include <string>
-#include <cmath>
-#include <list>
-*/
 #include <iostream>
 #include <string>
 #include <cmath>
+
+
+
 
 class Entity
 {
@@ -46,6 +40,12 @@ public:
 	virtual void React_on(Entity * entity);
 };
 
+/*
+
+Это класс игрока
+
+*/
+
 class Player: public Entity{
 protected:
 	Map * map;
@@ -58,6 +58,14 @@ public:
 
 };
 
+/*
+
+Это класс зомби.
+переменная seen нужно для записи информации, видел ли зомби недавно игркоа
+Если он его видел и игрок пропал из поле зрения - зомби должен начать поиски.
+Когда игрок отходит достаточно далеко переменная обнуляется и зомби перестаёт искать
+
+*/
 
 
 class Zombie:public Entity{
@@ -70,6 +78,29 @@ public:
 	void React_on(Entity * entity);
 	void update(const float &dt);
 	void render(sf::RenderWindow * window);
+
+};
+
+/*
+
+	Это лампа, переменная is_on - отвечает за состояния (включена/выключена)
+
+	а перменная bad_cond... Ну... В рогалике и лампы случайные )
+	Некоторые из них много мерцают при переключении (bad_cond = true)
+
+*/
+
+class Lantern:public Entity{
+	protected:
+		Map * map;
+		bool is_on;
+		bool bad_cond;
+	public:
+		~Lantern();
+		Lantern(std::string F, float X, float Y, float W, float H, Map *);
+		void React_on(Entity * Entity);
+		void update(const float &dt);
+		void render(sf::RenderWindow * window);
 
 };
 

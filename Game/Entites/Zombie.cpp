@@ -11,7 +11,7 @@ Zombie::~Zombie(){
 	delete sprite;
 	delete texture;
 	delete image;
-	//path.clear();
+	//path.clear(); //Таков путь.
 };
 
 void Zombie::update(const float &dt)
@@ -21,10 +21,18 @@ void Zombie::update(const float &dt)
 
 void Zombie::render(sf::RenderWindow * window){
 
+	if(not map->getMask(x, y)){
+		return;
+	}
+
+	int a = map->getLum(x, y);
+
 	sf::RectangleShape rect;
     rect.setSize(sf::Vector2f(16, 16));
-    rect.setOutlineColor(sf::Color::Red);
+    rect.setFillColor(sf::Color(255, 0, 0, a));
     rect.setOrigin(8, 8);
+
+    this->sprite->setColor(sf::Color(255, 255, 255, a));
 
 	this->sprite->setRotation(this->getAngleD());
 	this->sprite->setPosition(this->x, this->y);

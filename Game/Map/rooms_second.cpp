@@ -4,6 +4,8 @@
 #include "A_star.h"
 
 
+// ф-ция для записи конмат в матрицу.
+
 void RoomList::transpose_to_matrix(std::vector<std::list <char>>& a){
 
 	a = {};
@@ -152,7 +154,7 @@ void Map::render_all(RenderWindow * window){
 
 }
 
-void Map::render_region(RenderWindow * window, double x_left, double x_right, double y_top, double y_bottom){
+void Map::render_region(RenderWindow * window, double x_left, double x_right, double y_top, double y_bottom, bool mask){
 
 	double x;
 	double y;
@@ -174,8 +176,32 @@ void Map::render_region(RenderWindow * window, double x_left, double x_right, do
 	if(i1 > WIDTH/tile_size-1)
 		i1 = WIDTH/tile_size-1;
 
+	int a = 255;
+
+	bool liten = 0;
+
 	for(int i = i1; i <= i2; i ++){
 		for(int j = j1; j <= j2; j ++){
+
+			if(mask){
+
+				if(render_mask.count(i+HEIGHT/tile_size*j) == 0)
+					continue;
+				else if (env_lighting_mask.count(i+HEIGHT/tile_size*j) == 0){
+					if(player_lighting_mask.count(i+HEIGHT/tile_size*j) == 0){
+						continue;
+					}
+					else
+						a = player_lighting_mask[i+HEIGHT/tile_size*j];
+
+					liten = 0;
+				}
+				else{
+					a = env_lighting_mask[i+HEIGHT/tile_size*j];
+					liten = 1;
+				}
+			}
+
 
 			x = j*tile_size;
 			y = i*tile_size;
@@ -183,77 +209,88 @@ void Map::render_region(RenderWindow * window, double x_left, double x_right, do
 			RectangleShape tile(sf::Vector2f(tile_size, tile_size));
 			tile.setPosition(x-tile_size/2, y-tile_size/2);	
 
-			switch(a[i+HEIGHT/tile_size*j].back()){
+			switch(this->a[i+HEIGHT/tile_size*j].back()){
 				// 1 - стена (но не та, что альбом или книга Сартра)
 				case 1:
-					tile.setFillColor(sf::Color(255, 255, 255));
+					tile.setFillColor(sf::Color(255, 255, 255, a));
 					window->draw(tile);
+					if(env_lighting_mask.count((i1+i2)/2+HEIGHT/tile_size*(j1+j2)/2) == 0)
+						liten = 0;
 					break;
 				// 0 - пустое пространство свободное для пересечения
 				case 0:
-					tile.setFillColor(sf::Color(55, 45, 65));
+					tile.setFillColor(sf::Color(55, 45, 65, a));
 					window->draw(tile);
 					break;
 				// 2 - дверь
 				case 2:
-					tile.setFillColor(sf::Color(0, 139, 139));
+					tile.setFillColor(sf::Color(0, 139, 139, a));
 					window->draw(tile);
 					break;
 				// 3 - вода
 				case 3:
-					tile.setFillColor(sf::Color(0, 255, 255));
+					tile.setFillColor(sf::Color(0, 255, 255, a));
 					window->draw(tile);
 					break;
 				// 4 - трава/зелень. А вообще я не определился. Может быть это и плесень...
 				case 4:
-					tile.setFillColor(sf::Color(0, 128, 0));
+					tile.setFillColor(sf::Color(0, 128, 0, a));
 					window->draw(tile);
 					break;
 				// 5 - обыкновенная тропинка / каменная плита
 				case 5:
-					tile.setFillColor(sf::Color(105, 105, 105));
+					tile.setFillColor(sf::Color(105, 105, 105, a));
 					window->draw(tile);
 					break;
 				// 6 - лестница (в рай)
 				case 6:
-					tile.setFillColor(sf::Color(0, 0, 0));
+					tile.setFillColor(sf::Color(0, 0, 0, a));
 					window->draw(tile);
 					break;
 				// факел (светильник)
 				case 7:
-					tile.setFillColor(sf::Color(255, 177, 0));
+					tile.setFillColor(sf::Color(255, 177, 0, a));
 					window->draw(tile);
 					break;
 				// потухший факел (светильник)
 				case 8:
-					tile.setFillColor(sf::Color(155, 150, 0));
+					tile.setFillColor(sf::Color(155, 150, 0, a));
 					window->draw(tile);
 					break;
 				// закрытая дверь
 				case 9:
-					tile.setFillColor(sf::Color(125, 255, 238));
+					tile.setFillColor(sf::Color(125, 255, 238, a));
 					window->draw(tile);
 					break;
 				// какая-то ловушка
 				case -2:
-					tile.setFillColor(sf::Color(255, 25, 0));
+					tile.setFillColor(sf::Color(255, 25, 0, a));
 					window->draw(tile);
 					break;
 				// спавн мобов/потенциальыне точки для их патрулирования
 				case -3:
-					tile.setFillColor(sf::Color(204, 115, 0));
+					tile.setFillColor(sf::Color(204, 115, 0, a));
 					window->draw(tile);
 					break;
 				// моб в засаде (наелся в траве и спит.)
 				case -4:
-					tile.setFillColor(sf::Color(178, 34, 34));
+					tile.setFillColor(sf::Color(178, 34, 34, a));
 					window->draw(tile);
 					break;
 
 
 				default:
 					tile.setFillColor(sf::Color(0, 0, 0));
+					window->draw(tile);
+					if(env_lighting_mask.count((i1+i2)/2+HEIGHT/tile_size*(j1+j2)/2) == 0)
+						liten = 0;
 
+			}
+
+			if(liten){
+
+				tile.setFillColor(sf::Color(225, 205, 55, a/3));
+				window->draw(tile);
 			}
 
 		}
@@ -286,7 +323,12 @@ void Map::build_Hallways(){
 			for(int j = 0; j < res.size(); j+=2){
 				if(a[res[j+1]+res[j]*HEIGHT/tile_size].back() == 1 ){
 					if( a[res[j+1+2]+res[j+2]*HEIGHT/tile_size].back() != 1)
-						a[res[j+1]+res[j]*HEIGHT/tile_size].back() = 2;
+						if(Rooms->Final[i].color == 6){
+							a[res[j+1]+res[j]*HEIGHT/tile_size].back() = 9; // закрытая комната
+						}
+						else{
+							a[res[j+1]+res[j]*HEIGHT/tile_size].back() = 2;
+						}
 					else
 						a[res[j+1]+res[j]*HEIGHT/tile_size].back() = 0;
 				}
@@ -343,7 +385,6 @@ void Map::build_Hallways(){
 	сокровищницу/декоративную площадку
 	6 - комнаты с числом соседних = 1. Потенциальные тайные/закрытые комнаты.
 
-	Я надеюсь, что у нас получится вместе писать генерацию тайлов окружения,
 	потому просбюа подробно расписывать метод генерации и собсвтенно сам объект,
 	что кидается в комнату. Желаю весело провести время =)
 
@@ -351,7 +392,7 @@ void Map::build_Hallways(){
 
 
 
-void Map::Gen_Sur(){
+void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 	auto rng = std::default_random_engine {};
 
@@ -390,7 +431,7 @@ void Map::Gen_Sur(){
 			int y1_top = int(round(((Rooms->Final[i].y_top)/tile_size)));
 			int y1_bottom = int(round(((Rooms->Final[i].y_bottom)/tile_size)));
 
-			// Случайная точка в исхожной комнате
+			// Случайная точка в исходной комнате
 			int x1 = rand()%(x1_right-x1_left)+x1_left+1;
 			int y1 = rand()%(y1_bottom-y1_top)+y1_top+1;
 			// центр комнат соседней
@@ -408,13 +449,13 @@ void Map::Gen_Sur(){
 					a[res[j+1]+res[j]*HEIGHT/tile_size].push_back(3);
 				}
 				counter += 2;
-				if(a[res[j+1]+res[j]*HEIGHT/tile_size].back() == 2){
+				if(a[res[j+1]+res[j]*HEIGHT/tile_size].back() == 2 || a[res[j+1]+res[j]*HEIGHT/tile_size].back() == 9){
 					break;
 				}
 
 			}
 
-			// Обрисовываю оборванный путь в 3-окрестности. НА выход за пределы комнаты - пофиг (это типо двери протикают)
+			// Обрисовываю оборванный путь в 3-окрестности. НА выход за пределы комнаты - пофиг (это типо двери протекают)
 
 			for(int j = 0; j < counter; j+=2){
 
@@ -484,6 +525,9 @@ void Map::Gen_Sur(){
 
 				int x = rand()%(x_right-x_left)+x_left+1; // Координата центра
 				int y = rand()%(y_bottom-y_top)+y_top+1; // Координата центра
+
+				if(x+3 > WIDTH || y+3 > HEIGHT || x-3 < 0 || y -3 < 0)
+					continue;
 
 				for(int k = 0; k < 7; k++){
 					for(int h = 0; h < 7; h++){
@@ -628,11 +672,10 @@ void Map::Gen_Sur(){
 					}
 
 					if(a[y+x*HEIGHT/tile_size].back() == 0 || a[y+x*HEIGHT/tile_size].back() == 3 || a[y+x*HEIGHT/tile_size].back() == 4){
-						if(rand()%2)
-							a[y+x*HEIGHT/tile_size].push_back(7);
-						else
-							a[y+x*HEIGHT/tile_size].push_back(8);
+						buf["Lantern"].push_back(x*tile_size);
+						buf["Lantern"].push_back(y*tile_size);
 
+						printf("Lantern added to map! \n");
 						break;
 					}
 
@@ -675,11 +718,10 @@ void Map::Gen_Sur(){
 					
 
 					if(a[y+x*HEIGHT/tile_size].back() == 0 || a[y+x*HEIGHT/tile_size].back() == 3 || a[y+x*HEIGHT/tile_size].back() == 4){
-						if(rand()%2)
-							a[y+x*HEIGHT/tile_size].push_back(7);
-						else
-							a[y+x*HEIGHT/tile_size].push_back(8);
+						buf["Lantern"].push_back(x*tile_size);
+						buf["Lantern"].push_back(y*tile_size);
 
+						printf("Lantern added to map! \n");
 						break;
 					}
 					}
@@ -704,74 +746,6 @@ void Map::Gen_Sur(){
 				}
 			}
 
-			for(int k = u1; k <= u2; k++){
-				if(a[v1+HEIGHT/tile_size*k].back() == 2){
-					a[v1+HEIGHT/tile_size*k].back() = 9;
-					flag_for_locked = 1;
-					break;
-				}
-				if(a[v2+HEIGHT/tile_size*k].back() == 2){
-					a[v2+HEIGHT/tile_size*k].back() = 9;
-					flag_for_locked = 1;
-					break;
-				}
-			}
-
-			if(flag_for_locked){
-				continue;
-			}
-
-			for(int k = v1; k <= v2; k++){
-				if(a[k+HEIGHT/tile_size*u1].back() == 2){
-					a[k+HEIGHT/tile_size*u1].back() = 9;
-					flag_for_locked = 1;
-					break;
-				}
-				if(a[k+HEIGHT/tile_size*u2].back() == 2){
-					a[k+HEIGHT/tile_size*u2].back() = 9;
-					flag_for_locked = 1;
-					break;
-				}
-			}
-
-			if(flag_for_locked){
-				continue;
-			}
-
-			u1 -= 1;
-			v1 -= 1;
-			u2 += 1;
-			v2 += 1;
-
-			for(int k = u1; k <= u2; k++){
-				if(a[v1+HEIGHT/tile_size*k].back() == 2){
-					a[v1+HEIGHT/tile_size*k].back() = 9;
-					flag_for_locked = 1;
-					break;
-				}
-				if(a[v2+HEIGHT/tile_size*k].back() == 2){
-					a[v2+HEIGHT/tile_size*k].back() = 9;
-					flag_for_locked = 1;
-					break;
-				}
-			}
-
-			if(flag_for_locked){
-				continue;
-			}
-
-			for(int k = v1; k <= v2; k++){
-				if(a[k+HEIGHT/tile_size*u1].back() == 2){
-					a[k+HEIGHT/tile_size*u1].back() = 9;
-					flag_for_locked = 1;
-					break;
-				}
-				if(a[k+HEIGHT/tile_size*u2].back() == 2){
-					a[k+HEIGHT/tile_size*u2].back() = 9;
-					flag_for_locked = 1;
-					break;
-				}
-			}
 		}
 
 		if(Rooms->Final[i].color == 4){
@@ -783,10 +757,14 @@ void Map::Gen_Sur(){
 			int v2 = int(round(Rooms->Final[i].y_bottom/tile_size));
 
 
+			if(abs(u2-u1) < 5 || abs(v1-v2) < 5)
+				continue;
+
+
 			for(int i = 0; i < rand()%3+1; i++){
 
-				int x = rand()%(u2-u1-2)+u1+1;
-				int y = rand()%(u2-u1-2)+u1+1;		
+				int x = rand()%(u2-u1)+u1;
+				int y = rand()%(u2-u1)+u1;		
 
 
 				if(a[y+x*HEIGHT/tile_size].back() == 0){
@@ -912,10 +890,16 @@ void Map::Gen_Sur(){
 
 
 }
+/*
 
+Респавн мобов у меня работает буквально в границе экрана (т.е. в армке ширинйо один тайл за обзором). 
+Это очень класс решает проблему оптимищации, но если точка спавна окажется сразу же в пределах видимости игрока при начале игры, то
+она србаотет только если от неё отдалится =(
+Хорошим решением была бы единичная респа всех мобов в пределе видимотси, но мне лень это писать.
 
+*/
 
-void Map::check_Spawn(std::vector<double> & buf, const double & x, const double & y, double range){
+void Map::check_Spawn(std::map<std::string , std::vector<double>> & buf, const double & x, const double & y, double range){
 
 	int j1 = int(round(x-range)/tile_size);
 	int i1 = int(round(y-range)/tile_size);
@@ -924,15 +908,15 @@ void Map::check_Spawn(std::vector<double> & buf, const double & x, const double 
 	int i2 = int(round(y+range)/tile_size);
 
 
-	if(j1 < 0)
-		j1 = 0;
 	if(i1 < 0)
 		i1 = 0;
+	if(j1 < 0)
+		j1 = 0;
 
 	if(i2 > HEIGHT/tile_size-1)
 		i2 = HEIGHT/tile_size-1;
-	if(i1 > WIDTH/tile_size-1)
-		i1 = WIDTH/tile_size-1;
+	if(i2 > WIDTH/tile_size-1)
+		j2 = WIDTH/tile_size-1;
 
 	
 
@@ -940,8 +924,8 @@ void Map::check_Spawn(std::vector<double> & buf, const double & x, const double 
 
 			if(a[i1+j*HEIGHT/tile_size].back()==-4){
 			a[i1+j*HEIGHT/tile_size].pop_back();
-			buf.push_back(j*tile_size);
-			buf.push_back(i1*tile_size);
+			buf["Zombie"].push_back(j*tile_size);
+			buf["Zombie"].push_back(i1*tile_size);
 			printf("%d %d \n", i1, j);
 			}
 
@@ -951,8 +935,8 @@ void Map::check_Spawn(std::vector<double> & buf, const double & x, const double 
 
 			if(a[i2+j*HEIGHT/tile_size].back()==-4){
 			a[i2+j*HEIGHT/tile_size].pop_back();
-			buf.push_back(j*tile_size);
-			buf.push_back(i2*tile_size);
+			buf["Zombie"].push_back(j*tile_size);
+			buf["Zombie"].push_back(i2*tile_size);
 			printf("%d %d \n", i2, j);
 			}
 
@@ -962,8 +946,8 @@ void Map::check_Spawn(std::vector<double> & buf, const double & x, const double 
 
 			if(a[i+j1*HEIGHT/tile_size].back()==-4){
 			a[i+j1*HEIGHT/tile_size].pop_back();
-			buf.push_back(j1*tile_size);
-			buf.push_back(i*tile_size);
+			buf["Zombie"].push_back(j1*tile_size);
+			buf["Zombie"].push_back(i*tile_size);
 			printf("%d %d \n", i, j1);
 			}
 
@@ -973,8 +957,8 @@ void Map::check_Spawn(std::vector<double> & buf, const double & x, const double 
 
 			if(a[i+j2*HEIGHT/tile_size].back()==-4){
 			a[i+j2*HEIGHT/tile_size].pop_back();
-			buf.push_back(j2*tile_size);
-			buf.push_back(i*tile_size);
+			buf["Zombie"].push_back(j2*tile_size);
+			buf["Zombie"].push_back(i*tile_size);
 			printf("%d %d \n", i, j2);
 			}
 
@@ -983,6 +967,8 @@ void Map::check_Spawn(std::vector<double> & buf, const double & x, const double 
 
 
 }
+
+// просто мне нужна ф-ция для определния знака
 
 int sign(int a){
 	if(a > 0){
@@ -995,7 +981,14 @@ int sign(int a){
 		return 0;
 
 }
+/*
 
+ так, ну вот этот метод определяет пересекает ли прямая,
+  соединяющая две произвольные точки какой-нибдуь непрозрачный тайл (стена или дверь)
+
+  простым словами, тут обрисовывается "клетками прямая (причём точно, я намернно тестил алгос)
+
+ */
 
 bool Map::if_visible(double x1, double y1, double x2, double y2){
 
@@ -1028,7 +1021,7 @@ bool Map::if_visible(double x1, double y1, double x2, double y2){
 		nextIntersectX = 0;
 	}
 	else{
-		double startXFraction = x1 - floor(x1);//int(x1/tile_size)*tile_size;
+		double startXFraction = x1 - floor(x1);
 		if(u1-u2>0){
 			intersectXstep = 1./(u1-u2);
 			nextIntersectX =(1-startXFraction )*intersectXstep;}
@@ -1042,7 +1035,7 @@ bool Map::if_visible(double x1, double y1, double x2, double y2){
 		nextIntersectY = 0;
 	}
 	else{
-		double startYFraction = y1 - floor(y1);//int(y1/tile_size)*tile_size;
+		double startYFraction = y1 - floor(y1);
 		if(v1-v2>0){
 			intersectYstep = 1./(v1-v2);
 			nextIntersectY =(1-startYFraction )*intersectYstep;}
@@ -1068,6 +1061,8 @@ bool Map::if_visible(double x1, double y1, double x2, double y2){
 	return true;
 
 }
+
+// Просто костыль для возврата моба на карту в качестве точки спавна
 
 void Map::push_mob_back(int id, const double & x, const double & y){
 

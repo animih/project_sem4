@@ -1,0 +1,1 @@
+g++ test.cpp ./States/State.cpp ./States/GameState.cpp ./States/MainMenu.cpp ./Entites/Entity.cpp ./Entites/Player.cpp ./Entites/Zombie.cpp ./resources/Buttom.cpp ./Map/room_graph.cpp ./Map/rooms_first.cpp ./Map/rooms_second.cpp ./Map/make_map.cpp -lsfml-graphics -lsfml-window -lsfml-system -o test && ./test

@@ -129,18 +129,55 @@ class RoomList{
 	на выходе получается массив double (размера 2)
 	с координатами игрока
 
-	update_all - прорисовка всей карты сразу
+	render_all - прорисовка всей карты сразу
 
 	Gen_sur отвечает за генерацию окружения в карте.
 	Подробное описание работы читай в rooms_second.cpp
 
 */
 
+/*
+
+	Новый коммит, новые 500 000 методов.
+	На самом деле я их писал для удобства, хоть с виду не скажешь.
+	Если вам нужно убдет потребовать какую-нибудь зеротень от карты,
+	почти с большей веротяностью нужный метод уже есть.
+
+
+	render_region - отвечает за прорисовку карты ТОЛЬКО в указанном диапозоне (например в размерах окна)
+	там есть один парамтер, который по дфефлоту отмечен false, т.к. вот:
+	если передать true, о прорисовка будет происходить с учётом масок обзора и света
+
+	маска обзора представляет из себя отображение из инт в бул (инт - это две координаты записанные в виде x+y*n)
+	очень быстро могу проверить в ф-ции рендера видима ли клетка (и не рендерить её, если что)
+
+	маска света - это тоже самое, что маска обзора, но вместо булевских значений там параметры прозрачности
+	очень эффектная штука!
+
+	update_view_mask() - обновляет маску игрока для обзора
+
+	update_player_lighting_mask() - обновляет маску игрока для света (собственное поле зрение)
+	должна вызываться в цикле, т.к. игрок перемезается постоянно
+
+	update_env_lighting_mask() - обновляет маску света окружения. Вызывается только при изменении этого самого окружения
+	Простыми словами, я у экономлю ресурс вызываю метод только при включении/выключении лампы.
+	параметр is_on - переменная обозначающая тип операции
+	is_on = true - рисую область света видимый свет для источника
+	is_on = true - убираю из области видимый свет для источника
+	Совсем простыми словами - я передаю сюда переменную обозначающую включена или выключена лампа. Чтобы быстро можно было посчитать изменение в текущей маске.
+
+
+*/
+
 class Map{
 
 	int tile_size; // размер единичного тайла
-	std::vector<std::list <char>> a = {};
+	std::vector<std::list <char>> a = {}; 
 	RoomList * Rooms;
+
+	std::map<int, bool> render_mask;
+	std::map<int, int> player_lighting_mask;
+	std::map<int, int> env_lighting_mask;
 
 
 	friend class RoomList;
@@ -150,17 +187,29 @@ class Map{
 		Map(int);
 		int intersec(const double & x, const double & y);
 		void render_all(RenderWindow * window);
-		void render_region(RenderWindow * window, double x_left, double x_right, double y_top, double y_bottom);
+		void render_region(RenderWindow * window, double x_left, double x_right, double y_top, double y_bottom, bool mask = false);
 		void build_Hallways();
-		void Gen_Sur();
-		double * make_map(int * size, int tile_size, int radius, int average, int number, RenderWindow *);
-		void check_Spawn(std::vector<double> & buf, const double & x, const double & y, double range);
+		void Gen_Sur(std::map<std::string, std::vector<double>> & buf);
+		double * make_map(int * size, int tile_size, int radius, int average, int number, RenderWindow *, std::map<std::string, std::vector<double>> & buf);
+		void check_Spawn(std::map<std::string, std::vector<double>> & buf, const double & x, const double & y, double range);
 		~Map(){
 			std::vector<std::list <char>>().swap(a);
 			//delete Rooms;
 		};
 		bool if_visible(double x1, double y1, double x2, double y2);
 		void push_mob_back(int id, const double & x, const double & y);
+		void update_view_mask(const double & x_coord, const double & y_coord, double radius_coord);
+		void update_player_lighting_mask(const double & x_coord, const double & y_coord, double radius_coord);
+		void update_env_lighting_mask(const double & x_coord, const double & y_coord, double radius_coord, bool is_on);
+		void cast_light_for_view(int x, int y, int radius, int row,
+		double start_slope, double end_slope, int xx, int xy, int yx,int yy);
+		void cast_light_for_player(int x, int y, int radius, int row,
+		double start_slope, double end_slope, int xx, int xy, int yx,int yy);
+		void cast_light_for_env(int x, int y, int radius, int row,
+		double start_slope, double end_slope, int xx, int xy, int yx,int yy, bool is_on);
+		const bool getMask(double x, double y);
+		int getLum(double x, double y);
+		void reset_lighting_mask();
 
 
 };
