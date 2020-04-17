@@ -29,6 +29,8 @@
 
 using namespace sf;
 
+
+
 // Класс для графа
 
 class Graph{
@@ -169,7 +171,11 @@ class RoomList{
 
 */
 
+class Tactics;
+
 class Map{
+
+	friend class Tactics;
 
 	int tile_size; // размер единичного тайла
 	std::vector<std::list <char>> a = {}; 
@@ -178,6 +184,8 @@ class Map{
 	std::map<int, bool> render_mask;
 	std::map<int, int> player_lighting_mask;
 	std::map<int, int> env_lighting_mask;
+
+	std::map<int, bool> tactics_for;
 
 
 	friend class RoomList;
@@ -210,6 +218,22 @@ class Map{
 		const bool getMask(double x, double y);
 		int getLum(double x, double y);
 		void reset_lighting_mask();
+		void make_test_map(int tile_size);
+
+
+};
+
+
+class Tactics{
+
+	Map * map;
+	std::list<int> allies = {};
+
+	public:
+		Tactics(Map * map);
+		~Tactics();
+		void refresh();
+		std::pair<int, int> lead_mob(double x1, double y1, double x2, double y2, bool walk);
 
 
 };

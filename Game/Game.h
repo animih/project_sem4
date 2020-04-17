@@ -54,7 +54,7 @@ class Game{
 
 Game::Game(){
 
-	this->window = new sf::RenderWindow(sf::VideoMode(640, 480), "RGlike v 1.0.0");
+	this->window = new sf::RenderWindow(sf::VideoMode(640*2, 480*2), "RGlike v 1.0.0");
 	this->states.push(new MainMenuState(this->window, &states));
 
 }

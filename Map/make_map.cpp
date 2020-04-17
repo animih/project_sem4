@@ -15,6 +15,8 @@ double * Map::make_map(int * size, int tile_size, int radius, int average, int n
 
 	Rooms = new RoomList();
 
+    printf("HI! \n");
+
 	Rooms->tile_size = tile_size;
 	Rooms->generate_rooms(radius, average, number);
 
@@ -212,5 +214,44 @@ double * Map::make_map(int * size, int tile_size, int radius, int average, int n
     size[1] = HEIGHT/tile_size;
     
     return coords;
+
+}
+
+void Map::make_test_map(int tile_size){
+    this->tile_size = tile_size;
+
+    a.clear();
+
+    for(int j = 0; j < HEIGHT/tile_size*WIDTH/tile_size; j++){
+        a.push_back(std::list<char>());
+    }
+
+    for(int i = 0; i < WIDTH/tile_size; i++){
+        for(int j = 0; j < HEIGHT/tile_size; j++){
+            if(i == 0 || j == 0|| i == WIDTH/tile_size-1 || j == HEIGHT/tile_size-1 )
+                a[j+HEIGHT/tile_size*i].push_back(1);
+            else
+                a[j+HEIGHT/tile_size*i].push_back(0);
+        }
+    }
+
+
+    a[3+HEIGHT/tile_size*2].push_back(1);
+    a[3+HEIGHT/tile_size*3].push_back(1);
+    a[4+HEIGHT/tile_size*2].push_back(1);
+
+    a[6+HEIGHT/tile_size*2].push_back(1);
+    a[7+HEIGHT/tile_size*3].push_back(1);
+    a[7+HEIGHT/tile_size*2].push_back(1);
+
+
+    a[3+HEIGHT/tile_size*5].push_back(1);
+    a[3+HEIGHT/tile_size*6].push_back(1);
+    a[4+HEIGHT/tile_size*6].push_back(1);
+
+    a[6+HEIGHT/tile_size*6].push_back(1);
+    a[7+HEIGHT/tile_size*6].push_back(1);
+    a[7+HEIGHT/tile_size*5].push_back(1);
+
 
 }

@@ -2,12 +2,11 @@
 #define MAINMENU_H
 
 #include "../States/GameState.h"
-#include "../resources/Buttom.h"
+#include "../Resourses/Buttom.h"
 
 /*
 
 	Это главное меню с милой кнопкой
-
 	Больше ничего и не требутся.
 
 */
@@ -18,6 +17,7 @@ class MainMenuState : public State{
 	sf::Font font;
 
 	Buttom * gamestate_btm;
+	Buttom * teststate_btm;
 
 	public:
 		MainMenuState(sf::RenderWindow * window, std::stack<State *> * states);

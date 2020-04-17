@@ -25,14 +25,12 @@ class State{
 		sf::Vector2i mousePosWindow;
 		sf::Vector2f mousePosView;
 
-		std::stack<State *> * states;
-
+		std::stack<State *> * states; // Это стек для различных состояний игры 
 	public:
 		State(sf::RenderWindow * window, std::stack<State *> * states);
 		virtual ~State();
 
 		const bool & getQuit() const;
-
 		virtual void checkForQuit();
 		virtual void endState() = 0;
 		virtual void updateMousePositions();
