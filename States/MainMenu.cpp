@@ -43,6 +43,10 @@ void MainMenuState::update(const float & dt){
 
 }
 
+void MainMenuState::update(){
+	
+}
+
 
 
 void MainMenuState::render(sf::RenderWindow * window){

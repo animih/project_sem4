@@ -10,22 +10,40 @@ GameState::GameState(sf::RenderWindow * window, std::stack<State *> * states, bo
 	int * b = new int[2];
 	
 	if(!test){
-		a = map->make_map(b, 32, 90, 385, 65, window, buf);
+		a = map->make_map(b, 32, 90, 385, 85, window, buf); // buf , tile_size, rad, avr_size, number
 		tactics = new Tactics(map);
 		std::string hero = "./Resourses/Player.png";
 		player = new Player(hero, a[0], a[1], 64, 64, map, &mousePosView, &active_mobs, this);
 		active_characters.push_back(player);
+		if(buf.count("Zombie") != 0){
+			for(int i = 0; i < buf["Zombie"].size(); i += 2){
+				active_mobs.push_back(new Zombie("./Resourses/Zombie.png", buf["Zombie"][i], buf["Zombie"][i+1], 64, 64, map, &active_characters, this, tactics));
+			}
+		}
+		if(buf.count("Lantern") != 0){
+			for(int i = 0; i < buf["Lantern"].size(); i += 2){
+				active_mobs.push_back(new Lantern("./Resourses/Lantern.png", buf["Lantern"][i], buf["Lantern"][i+1], 64, 65, map));
+			}
+		}
+		if(buf.count("Ward") != 0){
+			for(int i = 0; i < buf["Lantern"].size(); i += 2){
+				active_mobs.push_back(new Ward("./Resourses/Ward.png", buf["Ward"][i], buf["Ward"][i+1], 64, 64, map, &active_characters, &active_mobs, this, player));
+			}
+		}
+
 	}
 	else{
 		map->make_test_map(32);
 		tactics = new Tactics(map);
+		a[0] = 264;
 		a[1] = 264;
-		a[2] = 264;
 		std::string hero = "./Resourses/Player.png";
 		player = new Player(hero, a[0], a[1], 64, 64, map, &mousePosView, &active_mobs, this);
 		active_characters.push_back(player);
 		active_mobs.push_back(new Zombie("./Resourses/Zombie.png", 364, 364, 64, 64, map, &active_characters, this, tactics));
-		active_mobs.push_back(new Zombie("./Resourses/Zombie.png", 664, 664, 64, 64, map, &active_characters, this, tactics));
+		active_mobs.push_back(new Zombie("./Resourses/Zombie.png", 664, 664, 62, 62, map, &active_characters, this, tactics));
+		active_mobs.push_back(new Lantern("./Resourses/Lantern.png", 64*10, 64*10, 64, 65, map));
+		active_mobs.push_back(new Ward("./Resourses/Ward.png", 64*9, 64*9, 64, 64, map, &active_characters, &active_mobs, this, player));
 	}
 
 	view = new View();
@@ -71,10 +89,32 @@ void GameState::update(const float & dt){
 
 	for(auto obj : objects){
 		obj->update(dt);
-		obj->respawn();
 	}
 
 	// Удаляем недействительные
+
+}
+
+void GameState::update(){
+
+	for(auto chr : active_characters){
+		for(auto mob : active_mobs){
+			mob->react(chr);
+		}
+	}
+	tactics->refresh();
+
+	for(auto chr : active_characters){
+		chr->update();
+	}
+
+	for(auto mob : active_mobs){
+		mob->update();
+	}
+
+	for(auto obj : objects){
+		obj->update();
+	}
 
 	auto it_end = active_mobs.end();
 
@@ -86,7 +126,7 @@ void GameState::update(const float & dt){
 		auto it_del = it;
 		++it;
 		delete (*it_del);
-		objects.erase(it_del);
+		active_mobs.erase(it_del);
 		it_end = active_mobs.end();
 	}
 
@@ -110,14 +150,6 @@ void GameState::update(const float & dt){
 
 void GameState::render(sf::RenderWindow * window){
 
-
-	for(auto chr : active_characters){
-		for(auto mob : active_mobs){
-			mob->react(chr);
-		}
-	}
-	tactics->refresh();
-
 	view->setCenter(player->x, player->y);
 	window->setView(*view);
 
@@ -132,6 +164,8 @@ void GameState::render(sf::RenderWindow * window){
 		obj->render(window);
 	}
 
+	this->player->renderUI(window);
+
 }
 
 
@@ -143,14 +177,14 @@ void GameState::updateKeybinds(const float & dt){
 void GameState::endState(){
 
 
-	view->reset(sf::FloatRect(0, 0, 640, 480));
+	view->reset(sf::FloatRect(0, 0, 640*2, 480*2));
 	window->setView(*view);
 	std::cout << "Ending Gamestate!" << "\n";
 
 }
 
 bool GameState::collision_check(double x, double y){
-
+	
 	for(auto chr : active_characters){
 		if(chr->collisionbox->contains(x, y)){
 			return 1;
@@ -167,6 +201,6 @@ bool GameState::collision_check(double x, double y){
 			return 1;
 	}
 
-
+	
 	return 0;
 }

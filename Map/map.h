@@ -204,7 +204,7 @@ class Map{
 			std::vector<std::list <char>>().swap(a);
 			//delete Rooms;
 		};
-		bool if_visible(double x1, double y1, double x2, double y2);
+		bool if_visible(double x1, double y1, double x2, double y2, bool seen = 0);
 		void push_mob_back(int id, const double & x, const double & y);
 		void update_view_mask(const double & x_coord, const double & y_coord, double radius_coord);
 		void update_player_lighting_mask(const double & x_coord, const double & y_coord, double radius_coord);

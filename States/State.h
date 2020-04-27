@@ -36,6 +36,7 @@ class State{
 		virtual void updateMousePositions();
 		virtual void updateKeybinds(const float & dt) = 0;
 		virtual void update(const float & dt) = 0;
+		virtual void update() = 0;
 		virtual void render(sf::RenderWindow * window = NULL) = 0;
 };
 

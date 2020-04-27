@@ -40,15 +40,13 @@ class Game{
 	std::stack<State *> states;
 
 	public:
-		void updateDt();
 		void run();
+		void updateDt();
 		void render();
 		void update();
 		void updateSFMLEvents();
 		Game();
 		~Game();
-
-
 
 };
 
@@ -97,6 +95,7 @@ void Game::updateSFMLEvents(){
 void Game::update(){
 
 	if(!this->states.empty()){
+		this->states.top()->update();
 		this->updateDt();
 		this->states.top()->update(this->dt);
 

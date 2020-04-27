@@ -23,6 +23,7 @@ class GameState : public State{
 		~GameState();
 
 		void update(const float & dt);
+		void update();
 		void render(sf::RenderWindow * window = NULL);
 
 		void updateKeybinds(const float & dt);

@@ -4,12 +4,12 @@ Zombie::Zombie(std::string F, float X, float Y, float W, float H, Map * map, std
  : Entity(F, X, Y, W, H){
  	this->angle = rand()%180*M_PI/180;
 	this->map = map;
-	this->Max_Rotate_speed = 5;
+	this->Max_Rotate_speed = 8;
 	movement = new Movement(140, map, gamestate, this);
 	hp_armor = new Health(100, 1, this); // hit_points and armor class
 	animation = new AnimationComponent(&x, &y, & angle);
 
-	damage = new Stab(this, map, targets, 78, 10);
+	damage = new Slash(this, map, targets, 85, 10);
 
 	this->tactics = tactics;
 
@@ -36,14 +36,25 @@ Zombie::~Zombie(){
 void Zombie::render(sf::RenderWindow * window){
 	animation->render(window);
 
+	if(not map->getMask(x, y)){
+		return;
+	}
+
+	int a = map->getLum(x, y);
+	this->sprite->setColor(sf::Color(255, 255, 255, a));
+
+	this->sprite->setRotation(this->angle * 180 / 3.14159265);
+
 	this->sprite->setPosition(this->x, this->y);
     window->draw(*this->sprite);
-   
+   	
     sf::RectangleShape rect;
+    rect.setOrigin(8, 8);
+    /*
     rect.setSize(sf::Vector2f(16, 16));
     rect.setFillColor(sf::Color::Red);
-    rect.setOrigin(8, 8);
     rect.setPosition(sf::Vector2f(this->x, this->y));
+
 
    	window->draw(rect);
 
@@ -52,16 +63,16 @@ void Zombie::render(sf::RenderWindow * window){
 
    	rect.setPosition(dest.first, dest.second);
    	window->draw(rect);
+   	*/
    	double hp = hp_armor->Get_hp();
-
    	rect.setSize(sf::Vector2f(64*hp, 16));
-   	rect.setFillColor(sf::Color(14, 220, 60, 82));
+   	rect.setFillColor(sf::Color(14, 220, 60, 82*a/255));
    	rect.setPosition(sf::Vector2f(this->x-64/2+16/2, this->y-32));
 
    	window->draw(rect);
 
    	rect.setSize(sf::Vector2f(64-64*hp, 16));
-	rect.setFillColor(sf::Color(224, 20, 10, 82));
+	rect.setFillColor(sf::Color(224, 20, 10, 82*a/255));
    	rect.setPosition(sf::Vector2f(this->x-64/2+64*hp+16/2, this->y-32));
 
    	window->draw(rect);
@@ -73,14 +84,15 @@ void Zombie::setAngle(int dx, int dy){
 	this->angle = (atan2(dy, dx));
 };
 
-void Zombie::update(const float &dt){
+void Zombie::update(){
 
-	movement->update(dt);
-	hp_armor->update(dt);
-	animation->play(dt);
-	damage->update(dt);
+	if(damage_taken != 0){
+		seen = 1;
+	}
 
-	this->angle += this->Rotate_speed*dt;
+	movement->update();
+	hp_armor->update();
+	damage->update();
 
 	if(this->angle > M_PI){
 		this->angle -= 2*M_PI;
@@ -94,7 +106,25 @@ void Zombie::update(const float &dt){
 		damage->Hit(cos(angle), sin(angle));
 	}
 
-	this->sprite->setRotation(this->angle * 180 / 3.14159265);
+	if(dest.first != x && dest.second!= y ){
+
+	dir = tactics->lead_mob(this->x, this->y, dest.first, dest.second, 1);
+
+	}
+	movement->Set_dir(dir.first, dir.second);
+
+}
+
+void Zombie::update(const float &dt){
+
+	timer += dt;
+
+	movement->update(dt);
+	hp_armor->update(dt);
+	animation->play(dt);
+	damage->update(dt);
+
+	this->angle += this->Rotate_speed*dt;
 	
 }
 
@@ -112,28 +142,23 @@ int sign_sec(float a){
 
 void Zombie::react(Entity * entity){
 
-	if(dest.first != x && dest.second!= y ){
-	dir = tactics->lead_mob(this->x, this->y, dest.first, dest.second, 1);
-	}
-	movement->Set_dir(dir.first, dir.second);
-
 	if(fabs(this->x - entity->x) > 620 && fabs(this->y - entity->y) > 620){
 			this->seen = 0;
 			this->Rotate_speed = 0;
 			return;
 	}
-	else if(map->if_visible(this->x, this->y, entity->x, entity->y)){
+	else if(map->if_visible(this->x, this->y, entity->x, entity->y, this->seen)){
 
 
 		double rot_angle = atan2(-this->y + entity->y, -this->x + entity->x)-this->angle;
 		if(fabs(rot_angle) > M_PI){
 			rot_angle = -sign_sec(rot_angle)*(2*M_PI - fabs(rot_angle));
 		}
-		if(fabs(rot_angle) > 2 && !seen){
+		if(fabs(rot_angle) > 2 && !seen && fabs(entity->x - x) > 65 && fabs(entity->y - y) > 65){
 			return;
 		}
 
-		if(fabs(this->x - entity->x) < 55 && fabs(this->y - entity->y) < 55 && (!hit)){
+		if(fabs(this->x - entity->x) < 65 && fabs(this->y - entity->y) < 65 && (!hit)){
 			hit = 1;
 			animation->addAnimation("./Resourses/Zombie_bite.png", 0.6, 0, 0, 0, 4, 120, 64);
 		}

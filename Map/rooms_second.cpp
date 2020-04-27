@@ -274,7 +274,7 @@ void Map::render_region(RenderWindow * window, double x_left, double x_right, do
 					break;
 				// моб в засаде (наелся в траве и спит.)
 				case -4:
-					tile.setFillColor(sf::Color(178, 34, 34, a));
+					tile.setFillColor(sf::Color(55, 45, 65, a));
 					window->draw(tile);
 					break;
 
@@ -487,7 +487,10 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 							if(abs(v-1)+abs(k-1) == 2)
 								continue;
 							if(a[y1+x1*HEIGHT/tile_size].back() != 1 && a[y1+x1*HEIGHT/tile_size].back() != 2){
-								a[y1+x1*HEIGHT/tile_size].push_back(-4);
+								buf["Zombie"].push_back(x1*tile_size);
+								buf["Zombie"].push_back(y1*tile_size);
+
+								printf("Zombie added to map! \n");
 								flag_exit_mob = 1;
 								break;
 							}
@@ -552,7 +555,16 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 							if(abs(v-1)+abs(k-1) == 2)
 								continue;
 							if(a[y+x*HEIGHT/tile_size].back() != 1 && a[y+x*HEIGHT/tile_size].back() != 2){
-								a[y+x*HEIGHT/tile_size].push_back(-4);
+								if(rand()%3 == 0){
+									buf["Ward"].push_back(x*tile_size);
+									buf["Ward"].push_back(y*tile_size);
+									printf("Ward added to map! \n");
+								}
+								else{
+								buf["Zombie"].push_back(x*tile_size);
+								buf["Zombie"].push_back(y*tile_size);
+								printf("Zombie added to map! \n");
+								}
 								counter_of_traps -= 1;
 								flag_exit_hid_mob = 1;
 								break;
@@ -640,13 +652,15 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 			int y_top = int(round(((Rooms->Final[i].y_top)/tile_size)));
 			int y_bottom = int(round(((Rooms->Final[i].y_bottom)/tile_size)));
 
-			if(rand()%2){
+			if(abs(x_left-x_right) < 5 || abs(y_top-y_bottom) < 5)
+					continue;
+
+			if(rand()%3){
 
 				int x;
 				int y;
 
 				std::vector<int> b = {0, 1, 2, 3};
-
 
 				std::shuffle(b.begin(), b.end(), rng);
 
@@ -685,7 +699,16 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 			}
 			else if(Rooms->Final[i].color == 3){
 
-				if(rand()%2){
+				int x_left = int(round(((Rooms->Final[i].x_left)/tile_size)));
+				int x_right = int(round(((Rooms->Final[i].x_right)/tile_size)));
+
+				int y_top = int(round(((Rooms->Final[i].y_top)/tile_size)));
+				int y_bottom = int(round(((Rooms->Final[i].y_bottom)/tile_size)));
+
+				if(abs(x_left-x_right) < 5 || abs(y_top-y_bottom) < 5)
+					continue;
+
+				if(rand()%3 == 0){
 					int x1 = (x_right+x_left)/2;
 					int y1 = (y_top+y_bottom)/2;
 					int x, y;
@@ -760,15 +783,53 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 			if(abs(u2-u1) < 5 || abs(v1-v2) < 5)
 				continue;
 
+			int x_w;
+			int y_w;
+
+			switch(rand()%4){
+				case 0:
+					x_w = u1+2;
+					y_w = v1+2;
+					break;
+				case 1:
+					x_w = u1+2;
+					y_w = v2-2;
+					break;
+				case 2:
+					x_w = u2-2;
+					y_w = v1+2;
+					break;
+				case 3:
+					x_w = u2-2;
+					y_w = v2-2;
+					break;
+
+			}
+			if(a[y_w+x_w*HEIGHT/tile_size].back() == 0){
+				buf["Ward"].push_back(x_w*tile_size);
+				buf["Ward"].push_back(y_w*tile_size);
+			}
+			printf("Ward added to map! \n");
+
 
 			for(int i = 0; i < rand()%3+1; i++){
 
 				int x = rand()%(u2-u1)+u1;
-				int y = rand()%(u2-u1)+u1;		
+				int y = rand()%(v2-v1)+v1;
+
+				while(x == x_w && y == y_w){
+					x = rand()%(u2-u1)+u1;
+					y = rand()%(v2-v1)+v1;
+				}	
 
 
 				if(a[y+x*HEIGHT/tile_size].back() == 0){
+					buf["Zombie"].push_back(x*tile_size);
+					buf["Zombie"].push_back(y*tile_size);
+
 					a[y+x*HEIGHT/tile_size].push_back(-4);
+
+					printf("Zombie added to map! \n");
 				}
 
 			}
@@ -990,7 +1051,7 @@ int sign(int a){
 
  */
 
-bool Map::if_visible(double x1, double y1, double x2, double y2){
+bool Map::if_visible(double x1, double y1, double x2, double y2, bool seen){
 
 	
 
@@ -1052,7 +1113,7 @@ bool Map::if_visible(double x1, double y1, double x2, double y2){
 			v1 += tileStepY;
 			nextIntersectY += intersectYstep;}
 
-		if(a[v1+u1*HEIGHT/tile_size].back() == 1 || a[v1+u1*HEIGHT/tile_size].back() == 2){
+		if(a[v1+u1*HEIGHT/tile_size].back() == 1 || (!seen && a[v1+u1*HEIGHT/tile_size].back() == 2)){
 			return false;
 		}
 

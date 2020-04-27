@@ -43,7 +43,7 @@ void Map::cast_light_for_view(int x, int y, int radius, int row, double start_sl
 			}
 
 			if(blocked){
-				if(this->a[ay+ax*HEIGHT/tile_size].back() == 1 || this->a[ay+ax*HEIGHT/tile_size].back() == -1){
+				if(this->a[ay+ax*HEIGHT/tile_size].back() == 1 || this->a[ay+ax*HEIGHT/tile_size].back() == -1 || this->a[ay+ax*HEIGHT/tile_size].back() == 2){
 					next_start_slope = start_slope;
 					continue;
 				}

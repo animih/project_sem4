@@ -11,6 +11,7 @@ class Component{
 	public:
 		virtual ~Component(){};
 		virtual void update(const float & dt) = 0;
+		virtual void update() = 0;
 
 };
 
@@ -23,12 +24,14 @@ class Movement:public Component{
 	GameState * gamestate;
 	double dir_x = 0;
 	double dir_y = 0;
+	bool option;
 
 	public:
-		Movement(double speed, Map * map, GameState * gamestate, Entity * owner);
+		Movement(double speed, Map * map, GameState * gamestate, Entity * owner, bool option = 1);
 		~Movement(){};
 		void Set_dir(double dir_x, double dir_y);
 		void update(const float & dt);
+		void update();
 
 };
 
@@ -44,6 +47,7 @@ class Health:public Component{
 		Health(int hp, int armor, Entity * owner);
 		~Health(){};
 		void update(const float & dt);
+		void update();
 		double Get_hp();
 };
 
@@ -58,7 +62,9 @@ class Damage:public Component{
 	public:
 		~Damage(){};
 		Damage(Entity * owner, Map * map, std::list<Entity *> * target, double damage);
+		Damage(){};
 		virtual void update(const float &dt) = 0;
+		virtual void update() = 0;
 };
 
 class Stab:public Damage{
@@ -77,6 +83,7 @@ class Stab:public Damage{
 		~Stab(){};
 		void Hit(double dir_x, double dir_y);
 		void update(const float &dt);
+		void update();
 
 };
 
@@ -96,6 +103,22 @@ class Slash:public Damage{
 		~Slash(){};
 		void Hit(double dir_x, double dir_y);
 		void update(const float &dt);
+		void update();
+
+};
+
+class MovementDamage:public Damage{
+
+	double range;
+
+	std::list<Entity *> copy_list;
+
+	public:
+		MovementDamage(Entity * owner, Map * map, std::list<Entity *> * target, double range, double damage);
+		~MovementDamage();
+		void update(const float &dt);
+		void update();
+		void reload();
 
 };
 

@@ -1,10 +1,11 @@
 #include "../States/GameState.h"
 
-Movement::Movement(double speed, Map * map, GameState * gamestate, Entity * owner){
+Movement::Movement(double speed, Map * map, GameState * gamestate, Entity * owner, bool option){
 
 	this->gamestate = gamestate;
 	this->map = map;
 	this->owner = owner;
+	this->option = option;
 
 	this->max_speed = speed;
 
@@ -13,13 +14,50 @@ Movement::Movement(double speed, Map * map, GameState * gamestate, Entity * owne
 void Movement::Set_dir(double dir_x, double dir_y){
 	this->dir_x = dir_x;
 	this->dir_y = dir_y;
+	if(option){
+	int check = map->intersec(owner->x, owner->y+owner->collisionbox->height/2);
+	if(check == 1 || check == -1 || check == 6){
+		owner->y = int(round(owner->y/32))*32;
 
+		//this->dir_y = -fabs(this->dir_y);
+	}
+	else{
+	check = map->intersec(owner->x, owner->y-owner->collisionbox->height/2);
+	if(check == 1 || check == -1 || check == 6){
+		owner->y = int(round(owner->y/32))*32;
+		//this->dir_y = fabs(this->dir_y);
+	}
+	}
+
+	check = map->intersec(owner->x+owner->collisionbox->width/2, owner->y);
+	if(check == 1 || check == -1 || check == 6){
+		owner->x = int(round(owner->x/32))*32;
+		//this->dir_x = - fabs(this->dir_x);
+	}
+	else{
+	check = map->intersec(owner->x-owner->collisionbox->width/2, owner->y);
+	if(check == 1 || check == -1 || check == 6){
+		owner->x = int(round(owner->x/32))*32;
+		//this->dir_x = fabs(this->dir_x);
+	}
+	}
+	}
+
+	double norm = sqrt(dir_x*dir_x+dir_y*dir_y);
+	
 	if(this->dir_x != 0){
-		this->dir_x /= sqrt(dir_x*dir_x+dir_y*dir_y);
+		this->dir_x /= norm;
 	}
 	if(this->dir_y != 0){
-		this->dir_y /= sqrt(dir_x*dir_x+dir_y*dir_y);
+		this->dir_y /= norm;
 	}
+
+	owner->collisionbox->left = owner->x-32/2;
+	owner->collisionbox->top = owner->y-32/2;
+
+}
+
+void Movement::update(){
 
 }
 
@@ -35,15 +73,15 @@ void Movement::update(const float &dt){
 	dir_y > 0 ? add_y = owner->collisionbox->height/2 : dir_y < 0 ? add_y = -owner->collisionbox->height/2 : add_y = 0;
 
 	int check = map->intersec(owner->x, owner->y+add_y);
-	bool checkout = this->gamestate->collision_check(owner->x, owner->y+add_y*1.1); 
+	bool checkout = this->gamestate->collision_check(owner->x, owner->y+add_y); 
 
-	if(check == 1 || check == -1 || checkout)
+	if(check == 1 || check == 6 || check == -1 || checkout)
 		owner->y -= dir_y * max_speed * dt;
 
 	check = map->intersec(owner->x+add_x, owner->y);
-	checkout = this->gamestate->collision_check(owner->x+add_x*1.1, owner->y); 
+	checkout = this->gamestate->collision_check(owner->x+add_x, owner->y); 
 
-	if(check == 1 || check == -1 || checkout)
+	if(check == 1 || check == 6 || check == -1 || checkout)
 		owner->x -= dir_x * max_speed * dt;
 
 }
@@ -58,7 +96,7 @@ Health::Health(int hp, int armor, Entity * owner){
 
 }
 
-void Health::update(const float &dt){
+void Health::update(){
 
 	if(owner->damage_taken != 0){
 		if(owner->damage_taken < armor){
@@ -75,6 +113,10 @@ void Health::update(const float &dt){
 	}
 
 }
+
+void Health::update(const float &dt){
+
+};
 
 double Health::Get_hp(){
 	return this->hp/(this->max_hp*1.);
@@ -104,6 +146,10 @@ void Stab::Hit(double dir_x, double dir_y){
 	this->hit = 1;
 }
 
+
+void Stab::update(){
+
+}
 
 void Stab::update(const float &dt){
 
@@ -153,6 +199,9 @@ void Slash::Hit(double dir_x, double dir_y){
 	this->hit = 1;
 }
 
+void Slash::update(){
+	
+}
 
 void Slash::update(const float &dt){
 
@@ -185,6 +234,52 @@ void Slash::update(const float &dt){
 	}
 
 };
+
+MovementDamage::MovementDamage(Entity * owner, Map * map, std::list<Entity *> * target, double range, double damage):Damage(owner, map, target, damage){
+
+	this->range = range;
+	this->copy_list.clear();
+
+	for(auto u: *this->target){
+		copy_list.push_back(u);
+	}
+}
+
+MovementDamage::~MovementDamage(){
+	this->copy_list.clear();
+}
+
+void MovementDamage::reload(){
+	this->copy_list.clear();
+
+	for(auto u: *this->target){
+		copy_list.push_back(u);
+	}
+	printf("%d \n", copy_list.size());
+	printf("%d \n", target->size());
+}
+
+void MovementDamage::update(){
+	//printf("ARGH! \n");
+	auto it_end = copy_list.end();
+	for(auto it = copy_list.begin(); it != it_end;){
+		if(((*it)->x-owner->x)*((*it)->x-owner->x) + ((*it)->y-owner->y)*((*it)->y-owner->y) < range*range){
+			(*it)->damage_taken += damage;
+			auto it_del = it;
+			++it;
+			copy_list.erase(it_del);
+			it_end = copy_list.end();
+		}
+		++it;
+	}
+
+}
+
+void MovementDamage::update(const float &dt){
+
+}
+
+
 
 AnimationComponent::AnimationComponent(double * x, double * y, double * angle){
 	this->x = x;
