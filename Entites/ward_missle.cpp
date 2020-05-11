@@ -7,7 +7,8 @@ Entity(F, X, Y, W, H){
 	this->gamestate = gamestate;
 	this->player = player;
 
-	this->hp_armor = new Health(45, 0, this);
+	components["Hp"] = new Health(45, 0, this);
+
 	this->animation = new AnimationComponent(&x, &y, &angle);
 
 	this->target_list = targets;
@@ -19,7 +20,8 @@ Entity(F, X, Y, W, H){
 
 Ward::~Ward(){
 
-	delete hp_armor;
+	delete components["Hp"];
+	components.clear();
 	delete animation;
 
 }
@@ -54,7 +56,8 @@ void Ward::react(Entity * entity){
 void Ward::update(const float &dt){
 
 	animation->play(dt);
-	hp_armor->update(dt);
+	
+	components["Hp"]->update(dt);
 
 	if(shoot){
 		timer += dt;
@@ -65,12 +68,25 @@ void Ward::update(const float &dt){
 		}
 
 	}
+	auto it_end = components.end();
+
+	for(auto it = components.begin(); it != it_end;){
+		if((*it).second->exists){
+			++it;
+			continue;
+		}
+		auto it_del = it;
+		++it;
+		delete (*it_del).second;
+		components.erase(it_del);
+		it_end = components.end();
+	}
 
 }
 
 void Ward::update(){
 
-	hp_armor->update();
+	components["Hp"]->update();
 
 }
 
@@ -89,7 +105,7 @@ void Ward::render(sf::RenderWindow * window){
    	
     sf::RectangleShape rect;
     rect.setOrigin(8, 8);
-   	double hp = hp_armor->Get_hp();
+   	double hp = components["Hp"]->Get_hp();
    	rect.setSize(sf::Vector2f(64*hp, 16));
    	rect.setFillColor(sf::Color(14, 220, 60, 82*a/255));
    	rect.setPosition(sf::Vector2f(this->x-64/2+16/2, this->y-32));
@@ -169,8 +185,8 @@ void Missle::update(){
 			exists = 0;
 		}
 
-		dir_x = this->y-player->y;
-		dir_y = player->x - this->x;
+		dir_x = this->y-player->y - sin(player->angle);
+		dir_y = player->x - this->x + cos(player->angle);
 		if(dir_x != 0 || dir_y != 0){
 			double norm = sqrt(dir_x*dir_x+dir_y*dir_y);
 			dir_x /= norm;

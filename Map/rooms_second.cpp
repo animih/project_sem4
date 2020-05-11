@@ -180,6 +180,8 @@ void Map::render_region(RenderWindow * window, double x_left, double x_right, do
 
 	bool liten = 0;
 
+	RectangleShape tile(sf::Vector2f(tile_size, tile_size));
+
 	for(int i = i1; i <= i2; i ++){
 		for(int j = j1; j <= j2; j ++){
 
@@ -202,21 +204,26 @@ void Map::render_region(RenderWindow * window, double x_left, double x_right, do
 				}
 			}
 
-
 			x = j*tile_size;
 			y = i*tile_size;
-
-			RectangleShape tile(sf::Vector2f(tile_size, tile_size));
 			tile.setPosition(x-tile_size/2, y-tile_size/2);	
 
 			switch(this->a[i+HEIGHT/tile_size*j].back()){
 				// 1 - стена (но не та, что альбом или книга Сартра)
 				case 1:
-					tile.setFillColor(sf::Color(255, 255, 255, a));
-					window->draw(tile);
-					if(env_lighting_mask.count((i1+i2)/2+HEIGHT/tile_size*(j1+j2)/2) == 0)
+					if(env_lighting_mask.count((i1+i2)/2+HEIGHT/tile_size*(j1+j2)/2) == 0){
 						liten = 0;
+						if(player_lighting_mask.count(i+HEIGHT/tile_size*j) == 0){
+							continue;
+						}
+						else
+							a = player_lighting_mask[i+HEIGHT/tile_size*j];
+					}
+					tile.setFillColor(sf::Color(155, 155, 155, a));
+					window->draw(tile);
+
 					break;
+				
 				// 0 - пустое пространство свободное для пересечения
 				case 0:
 					tile.setFillColor(sf::Color(55, 45, 65, a));
@@ -224,6 +231,14 @@ void Map::render_region(RenderWindow * window, double x_left, double x_right, do
 					break;
 				// 2 - дверь
 				case 2:
+					if(env_lighting_mask.count((i1+i2)/2+HEIGHT/tile_size*(j1+j2)/2) == 0){
+						liten = 0;
+						if(player_lighting_mask.count(i+HEIGHT/tile_size*j) == 0){
+							continue;
+						}
+						else
+							a = player_lighting_mask[i+HEIGHT/tile_size*j];
+					}
 					tile.setFillColor(sf::Color(0, 139, 139, a));
 					window->draw(tile);
 					break;

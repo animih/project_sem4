@@ -5,11 +5,11 @@ Zombie::Zombie(std::string F, float X, float Y, float W, float H, Map * map, std
  	this->angle = rand()%180*M_PI/180;
 	this->map = map;
 	this->Max_Rotate_speed = 8;
-	movement = new Movement(140, map, gamestate, this);
-	hp_armor = new Health(100, 1, this); // hit_points and armor class
+	components["Movement"] = new Movement(140, map, gamestate, this);
+	components["Hp"] = new Health(100, 1, this); // hit_points and armor class
 	animation = new AnimationComponent(&x, &y, & angle);
 
-	damage = new Slash(this, map, targets, 85, 10);
+	components["Hit"] = new Slash(this, map, targets, 85, 10);
 
 	this->tactics = tactics;
 
@@ -23,10 +23,12 @@ Zombie::Zombie(std::string F, float X, float Y, float W, float H, Map * map, std
 
 Zombie::~Zombie(){
 
-	delete movement;
-	delete hp_armor;
+	for(auto obj : components){
+		delete obj.second;
+	}
+	components.clear();
+
 	delete animation;
-	delete damage;
 
 	delete sprite;
 	delete texture;
@@ -34,12 +36,12 @@ Zombie::~Zombie(){
 }
 
 void Zombie::render(sf::RenderWindow * window){
-	animation->render(window);
 
 	if(not map->getMask(x, y)){
 		return;
 	}
 
+	animation->render(window);
 	int a = map->getLum(x, y);
 	this->sprite->setColor(sf::Color(255, 255, 255, a));
 
@@ -64,7 +66,7 @@ void Zombie::render(sf::RenderWindow * window){
    	rect.setPosition(dest.first, dest.second);
    	window->draw(rect);
    	*/
-   	double hp = hp_armor->Get_hp();
+   	double hp = components["Hp"]->Get_hp();
    	rect.setSize(sf::Vector2f(64*hp, 16));
    	rect.setFillColor(sf::Color(14, 220, 60, 82*a/255));
    	rect.setPosition(sf::Vector2f(this->x-64/2+16/2, this->y-32));
@@ -86,13 +88,33 @@ void Zombie::setAngle(int dx, int dy){
 
 void Zombie::update(){
 
+	if(components.count("OnFlame") != 0 && animation->animations.count("./Resourses/OnFire.png") == 0){
+		animation->addAnimation("./Resourses/OnFire.png", 0.3, 0, 0, 0, 5, 64, 64, 1);
+	}
+	else if(components.count("OnFlame") == 0 && animation->animations.count("./Resourses/OnFire.png") != 0){
+		animation->animations["./Resourses/OnFire.png"]->stop = 1;
+	}
+
 	if(damage_taken != 0){
 		seen = 1;
 	}
 
-	movement->update();
-	hp_armor->update();
-	damage->update();
+	for(auto obj : components)
+		obj.second->update();
+
+	auto it_end = components.end();
+
+	for(auto it = components.begin(); it != it_end;){
+		if((*it).second->exists){
+			++it;
+			continue;
+		}
+		auto it_del = it;
+		++it;
+		delete (*it_del).second;
+		components.erase(it_del);
+		it_end = components.end();
+	}
 
 	if(this->angle > M_PI){
 		this->angle -= 2*M_PI;
@@ -103,7 +125,7 @@ void Zombie::update(){
 
 	if(hit == 1 && animation->animations.count("./Resourses/Zombie_bite.png") == 0){
 		hit = 0;
-		damage->Hit(cos(angle), sin(angle));
+		components["Hit"]->Set_dir(cos(angle), sin(angle));
 	}
 
 	if(dest.first != x && dest.second!= y ){
@@ -111,7 +133,7 @@ void Zombie::update(){
 	dir = tactics->lead_mob(this->x, this->y, dest.first, dest.second, 1);
 
 	}
-	movement->Set_dir(dir.first, dir.second);
+	components["Movement"]->Set_dir(dir.first, dir.second);
 
 }
 
@@ -119,10 +141,10 @@ void Zombie::update(const float &dt){
 
 	timer += dt;
 
-	movement->update(dt);
-	hp_armor->update(dt);
+	for(auto obj : components)
+		obj.second->update(dt);
+
 	animation->play(dt);
-	damage->update(dt);
 
 	this->angle += this->Rotate_speed*dt;
 	
@@ -142,7 +164,7 @@ int sign_sec(float a){
 
 void Zombie::react(Entity * entity){
 
-	if(fabs(this->x - entity->x) > 620 && fabs(this->y - entity->y) > 620){
+	if(fabs(this->x - entity->x) > 490 && fabs(this->y - entity->y) > 490){
 			this->seen = 0;
 			this->Rotate_speed = 0;
 			return;
@@ -170,11 +192,6 @@ void Zombie::react(Entity * entity){
 		//printf("%f %f\n", dest.first, dest.second);
 	}
 	else if(this->seen){
-		if(fabs(this->x - entity->x) > 420 && fabs(this->y - entity->y) > 420){
-			this->seen = 0;
-			this->Rotate_speed = 0;
-			return;
-		}
 		//this->Rotate_speed = 0;
 		double rot_angle = atan2(dir.first, dir.second)-this->angle;
 		if(fabs(rot_angle) > M_PI){
@@ -183,7 +200,7 @@ void Zombie::react(Entity * entity){
 
 		this->Rotate_speed = Max_Rotate_speed*sign_sec(rot_angle);
 
-		if(timer >= 5){
+		if(timer >= 1.2){
 			timer = 0;
 
 			dest.first = entity->x;

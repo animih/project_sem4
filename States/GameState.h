@@ -1,7 +1,7 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 
-# include "State.h"
+#include "../States/PauseState.h"
 
 
 class GameState : public State{

@@ -7,11 +7,16 @@ class Entity;
 class GameState;
 
 class Component{
-
+	protected:
+	Entity * owner;
 	public:
+		bool exists = 1;
 		virtual ~Component(){};
 		virtual void update(const float & dt) = 0;
 		virtual void update() = 0;
+		virtual double Get_hp(){};
+		virtual void reload(){};
+		virtual void Set_dir(double dir_x, double dir_y){};
 
 };
 
@@ -19,7 +24,6 @@ class Movement:public Component{
 
 	double max_speed;
 
-	Entity * owner;
 	Map * map;
 	GameState * gamestate;
 	double dir_x = 0;
@@ -29,9 +33,9 @@ class Movement:public Component{
 	public:
 		Movement(double speed, Map * map, GameState * gamestate, Entity * owner, bool option = 1);
 		~Movement(){};
-		void Set_dir(double dir_x, double dir_y);
 		void update(const float & dt);
 		void update();
+		void Set_dir(double dir_x, double dir_y);
 
 };
 
@@ -40,8 +44,6 @@ class Health:public Component{
 	int max_hp;
 	int hp;
 	int armor;
-
-	Entity * owner;
 
 	public:
 		Health(int hp, int armor, Entity * owner);
@@ -56,7 +58,6 @@ class Damage:public Component{
 	std::list<Entity *> * target; 
 	double damage;
 
-	Entity * owner;
 	Map * map;
 
 	public:
@@ -81,10 +82,9 @@ class Stab:public Damage{
 			this->range = range;
 		};
 		~Stab(){};
-		void Hit(double dir_x, double dir_y);
 		void update(const float &dt);
 		void update();
-
+		void Set_dir(double dir_x, double dir_y);
 };
 
 class Slash:public Damage{
@@ -101,10 +101,9 @@ class Slash:public Damage{
 			this->range = range;
 		};
 		~Slash(){};
-		void Hit(double dir_x, double dir_y);
 		void update(const float &dt);
 		void update();
-
+		void Set_dir(double dir_x, double dir_y);
 };
 
 class MovementDamage:public Damage{
@@ -121,6 +120,55 @@ class MovementDamage:public Damage{
 		void reload();
 
 };
+
+class Spell:public Component{
+	protected:
+	double range;
+
+	double dir_x;
+	double dir_y;
+
+	std::list<Entity *> * target;
+	Map * map;
+
+	public:
+		Spell(Entity * owner, Map * map, std::list<Entity *> * target, double range);
+		~Spell();
+		virtual void update(const float &dt) = 0;
+		virtual void update() = 0;	
+};
+
+class OnFlame:public Damage{
+
+	double timer = 0;
+	double duration;
+
+	double range;
+
+	double jmp_timer = 0;
+	double jmp_bound;
+
+	int comp = 0;
+
+	public:
+		OnFlame(Entity * owner, Map * map, std::list<Entity *> * target, double duration, double jmp_bound, double damage);
+		~OnFlame();
+		void update(const float &dt);
+		void update();
+};
+
+class FireCone:public Spell{
+
+	bool hit = 0;
+
+	public:
+		FireCone(Entity * owner, Map * map, std::list<Entity *> * traget, double range);
+		~FireCone();
+		void update(const float & dt);
+		void update();
+		void Set_dir(double dir_x, double dir_y);
+};
+
 
 class Player;
 
@@ -193,6 +241,9 @@ class AnimationComponent{
 						this->currentRect.top = this->endRect.top;
 						if(!continous){
 							stop = 1;
+						}
+						else{
+							reset();
 						}
 					}
 

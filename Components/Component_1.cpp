@@ -131,7 +131,7 @@ Damage::Damage(Entity * owner, Map * map, std::list<Entity *> * target, double d
 
 }
 
-void Stab::Hit(double dir_x, double dir_y){
+void Stab::Set_dir(double dir_x, double dir_y){
 
 	this->dir_x = dir_x;
 	this->dir_y = dir_y;
@@ -184,7 +184,7 @@ void Stab::update(const float &dt){
 
 };
 
-void Slash::Hit(double dir_x, double dir_y){
+void Slash::Set_dir(double dir_x, double dir_y){
 
 	this->dir_x = dir_x;
 	this->dir_y = dir_y;
@@ -346,3 +346,116 @@ void AnimationComponent::render(sf::RenderWindow * window){
 	}
 
 }
+
+
+Spell::Spell(Entity * owner, Map * map, std::list<Entity *> * target, double range){
+	this->owner = owner;
+	this->map = map;
+	this->target = target;
+
+	this->range = range;
+};
+Spell::~Spell(){
+
+};
+
+
+OnFlame::OnFlame(Entity * owner, Map * map, std::list<Entity *> * target, double duration, double jmp_bound, double damage):Damage(owner, map, target, damage){
+
+	this->duration = duration;
+	this->jmp_bound = jmp_bound;
+
+	this->range = 64;
+
+};
+
+OnFlame::~OnFlame(){
+}
+
+void OnFlame::update(){
+
+	if(timer >= duration){
+		this->exists = 0;
+	}
+
+	if(map->get_tile(owner->x, owner->y) == 3)
+		this->exists = 0;
+
+	map->update_player_lighting_mask(owner->x, owner->y, 120);
+
+}
+
+void OnFlame::update(const float & dt){
+
+	timer += dt;
+
+	if(round(timer) > comp){
+		owner->damage_taken += damage;
+		comp = round(timer);
+	}
+
+
+	for(auto tar : *target){
+			if(!map->if_visible(owner->x, owner->y, tar->x, tar->y))
+				continue;
+			if( (tar->x-owner->x)*(tar->x-owner->x) + (tar->y-owner->y)*(tar->y-owner->y) < range*range){
+				if(tar->components.count("OnFlame") == 0){
+					tar->components["OnFlame"] = new OnFlame(tar, map, target, duration, jmp_bound, damage);
+				}
+			}
+	}
+
+}
+
+FireCone::FireCone(Entity * owner, Map * map, std::list<Entity *> * target, double range):Spell(owner, map, target, range){
+
+}
+
+FireCone::~FireCone(){
+}
+
+void FireCone::Set_dir(double dir_x, double dir_y){
+
+	this->dir_x = dir_x;
+	this->dir_y = dir_y;
+
+	if(this->dir_x != 0){
+		this->dir_x /= sqrt(dir_x*dir_x+dir_y*dir_y);
+	}
+	if(this->dir_y != 0){
+		this->dir_y /= sqrt(dir_x*dir_x+dir_y*dir_y);
+	}
+
+	this->hit = 1;
+}
+
+void FireCone::update(){
+
+	if(hit){
+
+		hit = 0;
+
+		for(auto tar : *target){
+			if(!map->if_visible(owner->x, owner->y, tar->x, tar->y))
+				continue;
+			if((tar->x-owner->x)*(tar->x-owner->x) + (tar->y-owner->y)*(tar->y-owner->y) < 320*320){
+				double dot = (tar->x-owner->x)*dir_x + (tar->y-owner->y)*dir_y;
+				double det = (tar->x-owner->x)*dir_y - (tar->y-owner->y)*dir_x;
+
+				if(fabs(atan2(det, dot)) < 0.71){
+					tar->damage_taken += 15;
+					tar->components["OnFlame"] = new OnFlame(tar, map, target, 5, 0.5, 10);
+				}
+
+
+			}
+
+
+		}
+
+
+	}
+
+};
+
+void FireCone::update(const float &dt){};

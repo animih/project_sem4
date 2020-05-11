@@ -13,7 +13,7 @@ MainMenuState::MainMenuState(sf::RenderWindow * window, std::stack<State *> * st
 	double x = window->getSize().x/2-150/2;
 	double y = window->getSize().y/5*2-50/2;
 
-	this->gamestate_btm = new Buttom(x, y, 190, 50, &this->font, "Start the Game",
+	this->gamestate_btm = new Buttom(x, y, 190, 50, &this->font, "New Game",
 		sf::Color(65, 65, 65, 150), sf::Color(65, 65, 65, 206), 
 		sf::Color(95, 85, 75, 250));
 
@@ -30,6 +30,7 @@ MainMenuState::~MainMenuState()
 
 
 	delete this->gamestate_btm;
+	delete this->teststate_btm;
 
 }
 

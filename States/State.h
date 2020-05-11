@@ -19,7 +19,7 @@ class State{
 	protected:
 		sf::RenderWindow * window;
 		std::vector <sf::Texture> textures;
-		bool quit = false;
+		
 
 		sf::Vector2i mousePosScreen;
 		sf::Vector2i mousePosWindow;
@@ -29,7 +29,7 @@ class State{
 	public:
 		State(sf::RenderWindow * window, std::stack<State *> * states);
 		virtual ~State();
-
+		bool quit = false;
 		const bool & getQuit() const;
 		virtual void checkForQuit();
 		virtual void endState() = 0;

@@ -4,27 +4,29 @@ Player::Player(std::string F, float X, float Y, float W, float H, Map * map, sf:
  : Entity(F, X, Y, W, H){
 	this->map = map;
 	this->mousePosView = mousePosView;
-	movement = new Movement(550, map, gamestate, this, 0);
-	dash_movement = new Movement(950, map, gamestate, this, 0);
-	hp_armor = new Health(100, 5, this); // hit_points and armor class
+	components["Movement"] = new Movement(550, map, gamestate, this, 0);
+	components["Dash_mov"] = new Movement(1050, map, gamestate, this, 0);
+	components["Hp"] = new Health(100, 5, this); // hit_points and armor class
 	animation = new AnimationComponent(&x, &y, & angle);
-	damage_1 = new Stab(this, map, mobs, 145, 25); // указатель на владельца и указатель на карту, traget, range, damage
-	damage_2 = new Slash(this, map, mobs, 110, 20);
+	components["hit1"] = new Stab(this, map, mobs, 145, 25); // указатель на владельца и указатель на карту, traget, range, damage
+	components["hit2"] = new Slash(this, map, mobs, 110, 20);
 
-	dash = new MovementDamage(this, map, mobs, 70, 5);
-	timer = 0;
-	dash_duration = 0.65;
+	components["Dash_dmg"] = new MovementDamage(this, map, mobs, 70, 5);
+	components["FireCast"] = new FireCone(this, map, mobs, 298);
+	dash_duration = 0.25;
 	dash_kd = 1.8;
-
+	cast_kd = 7;
+	timer_2 = cast_kd;
 
 }
 
 Player::~Player(){
 
-	delete movement;
-	delete hp_armor;
-	delete damage_1;
-	delete damage_2;
+	for(auto obj : components){
+		delete obj.second;
+	}
+	components.clear();
+
 	delete animation;
 
 	delete sprite;
@@ -54,11 +56,16 @@ void Player::control(){
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
 		dX = 1;
 	};
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) && !is_dashing && timer >= dash_kd) {
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q) && !is_dashing && timer_1 >= dash_kd) {
 		is_dashing = 1;
-		dash->reload();
+		components["Dash_dmg"]->reload();
 		animation->addAnimation("./Resourses/Dash.png", dash_duration, 0, 0, 0, 5, 120, 64);
-		timer = 0;
+		timer_1 = 0;
+	};
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::E) && !is_dashing && timer_2 >= cast_kd) {
+		is_casting = 1;
+		timer_2 = 0;
+		animation->addAnimation("./Resourses/FireAnimation.png", 0.5, 0, 0, 0, 5, 560, 220);
 	};
 	if(sf::Mouse::isButtonPressed(sf::Mouse::Right)){
 		hit1 = 1;
@@ -70,22 +77,27 @@ void Player::control(){
 	}
 	if(hit1 == 1 && animation->animations.count("./Resourses/Player_stab.png") == 0){
 		hit1 = 0;
-		damage_1->Hit(mousePosView->x-this->x, mousePosView->y-this->y);
+		components["hit1"]->Set_dir(mousePosView->x-this->x, mousePosView->y-this->y);
 		printf("Hit1 \n");
 	}
 	if(hit2 == 1 && animation->animations.count("./Resourses/Player_slash.png") == 0){
 		hit2 = 0;
-		damage_2->Hit(mousePosView->x-this->x, mousePosView->y-this->y);
+		components["hit2"]->Set_dir(mousePosView->x-this->x, mousePosView->y-this->y);
+		printf("Hit2 \n");
+	}
+	if(is_casting == 1 && animation->animations.count("./Resourses/Player_slash.png") == 0){
+		is_casting = 0;
+		components["FireCast"]->Set_dir(mousePosView->x-this->x, mousePosView->y-this->y);
 		printf("Hit2 \n");
 	}
 
 	if(!is_dashing){
-		movement->Set_dir(dX, dY);
-		dash_movement->Set_dir(0, 0);
+		components["Movement"]->Set_dir(dX, dY);
+		components["Dash_mov"]->Set_dir(0, 0);
 	}
 	else{
 		damage_taken = 0;
-		dash_movement->Set_dir((mousePosView->x - this->x), (mousePosView->y - this->y));
+		components["Dash_mov"]->Set_dir((mousePosView->x - this->x), (mousePosView->y - this->y));
 	}
 }
 
@@ -103,7 +115,7 @@ void Player::render(sf::RenderWindow * window){
 
    	window->draw(rect);
 
-   	double hp = hp_armor->Get_hp();
+   	double hp = components["Hp"]->Get_hp();
 
    	rect.setSize(sf::Vector2f(64*hp, 16));
    	rect.setFillColor(sf::Color(14, 220, 60, 82));
@@ -125,9 +137,9 @@ void Player::renderUI(sf::RenderWindow * window){
 	sf::RectangleShape rect;
 
     if(!is_dashing){
-    	if(timer <= dash_kd){
+    	if(timer_1 <= dash_kd){
     		rect.setFillColor(sf::Color(155, 155, 155, 80));
-    		double a = timer/dash_kd;
+    		double a = timer_1/dash_kd;
     		rect.setPosition(sf::Vector2f(this->x-window->getSize().x/2+20, this->y+window->getSize().y/2-20-a*120));
     		rect.setSize(sf::Vector2f(120, a*120));
     	}
@@ -142,6 +154,26 @@ void Player::renderUI(sf::RenderWindow * window){
 		rect.setPosition(sf::Vector2f(this->x-window->getSize().x/2+20, this->y+window->getSize().y/2-20-120));
 		rect.setSize(sf::Vector2f(120, 120));
 	}
+	window->draw(rect);
+
+	if(!is_casting){
+    	if(timer_2 <= cast_kd){
+    		rect.setFillColor(sf::Color(155, 155, 155, 80));
+    		double a = timer_2/cast_kd;
+    		rect.setPosition(sf::Vector2f(this->x-window->getSize().x/2+40+155, this->y+window->getSize().y/2-20-a*120));
+    		rect.setSize(sf::Vector2f(120, a*120));
+    	}
+    	else{
+    		rect.setFillColor(sf::Color(155, 155, 155, 80));
+    		rect.setPosition(sf::Vector2f(this->x-window->getSize().x/2+40+155, this->y+window->getSize().y/2-20-120));
+			rect.setSize(sf::Vector2f(120, 120));
+    	}
+	}
+	else{
+		rect.setFillColor(sf::Color(195, 85, 55, 80));
+		rect.setPosition(sf::Vector2f(this->x-window->getSize().x/2+40+155, this->y+window->getSize().y/2-20-120));
+		rect.setSize(sf::Vector2f(120, 120));
+	}
    	
    	window->draw(rect);
 
@@ -153,18 +185,26 @@ void Player::setAngle(int dx, int dy){
 
 void Player::update(){
 	this->control();
-	movement->update();
-	dash_movement->update();
 
-	hp_armor->update();
-	damage_1->update();
-	damage_2->update();
+	auto it_end = components.end();
+
+	for(auto it = components.begin(); it != it_end;){
+		if((*it).second->exists){
+			++it;
+			continue;
+		}
+		auto it_del = it;
+		++it;
+		delete (*it_del).second;
+		components.erase(it_del);
+		it_end = components.end();
+	}
+
+	for(auto obj: components)
+		obj.second->update();
 
 	this->map->update_view_mask(this->x, this->y, 650);
 	this->map->update_player_lighting_mask(this->x, this->y, 250);
-	if(is_dashing){
-		dash->update();
-	}
 
 }
 
@@ -172,24 +212,26 @@ void Player::update(){
 void Player::update(const float &dt){
 
 	if(is_dashing){
-		timer += dt;
+		timer_1 += dt;
 		//printf("%f \n", timer);
 
 
-		if(timer >= dash_duration){
-			timer = 0;
+		if(timer_1 >= dash_duration){
+			timer_1 = 0;
 			is_dashing = 0;
 		}
 	}
-	else if(timer < dash_kd){
-		timer += dt;
+	else if(timer_1 < dash_kd){
+		timer_1 += dt;
 	}
 
-	movement->update(dt);
-	dash_movement->update(dt);
-	hp_armor->update(dt);
-	damage_1->update(dt);
-	damage_2->update(dt);
+	if(!is_casting && timer_2 <= cast_kd){
+		timer_2 += dt;
+	}
+
+	for(auto obj: components)
+		obj.second->update(dt);
+
 	animation->play(dt);
 	
 }

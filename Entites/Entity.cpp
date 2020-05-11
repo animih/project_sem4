@@ -24,9 +24,6 @@ Entity::~Entity(){
 void Entity::react(Entity * someone){
 	return;
 }
-void Entity::respawn(){
-	return;
-}
 
 const bool & Entity::if_exists() const{
 	return this->exists;

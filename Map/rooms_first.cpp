@@ -374,9 +374,6 @@ void RoomList::AddWalkRooms(){
 		graph->a[i].sort();
 		graph->a[i].unique();
 	}
-
-
-	// Переписать блять! upd: да не, работает вродь.
 	
 	
 	for(Room room: list){

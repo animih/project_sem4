@@ -13,6 +13,7 @@
 #include <list>
 #include <functional>
 #include <SFML/Graphics.hpp>
+#include <omp.h>
 
 
 #define num_in_x (list->Final[index].x_right+list->Final[index].x_left)/2
@@ -177,8 +178,7 @@ class Map{
 
 	friend class Tactics;
 
-	int tile_size; // размер единичного тайла
-	std::vector<std::list <char>> a = {}; 
+	int tile_size; // размер единичного тайла 
 	RoomList * Rooms;
 
 	std::map<int, bool> render_mask;
@@ -186,10 +186,14 @@ class Map{
 	std::map<int, int> env_lighting_mask;
 
 	std::map<int, bool> tactics_for;
-
+	std::vector<std::list <char>> a = {};
 
 	friend class RoomList;
 	friend void lead_path(Map * map, const double & start_x, const double & start_y, const double & end_x, const double & end_y, std::vector<int> & path);
+
+	friend void cast_light_for_view(Map * map, int x, int y, int radius, int row, double start_slope, double end_slope, int xx, int xy, int yx, int yy);
+	friend void cast_light_for_player(Map * map, int x, int y, int radius, int row, double start_slope, double end_slope, int xx, int xy, int yx, int yy);
+	friend void cast_light_for_env(Map * map, int x, int y, int radius, int row, double start_slope, double end_slope, int xx, int xy, int yx, int yy, bool is_on);
 
 	public:
 		Map(int);
@@ -209,17 +213,15 @@ class Map{
 		void update_view_mask(const double & x_coord, const double & y_coord, double radius_coord);
 		void update_player_lighting_mask(const double & x_coord, const double & y_coord, double radius_coord);
 		void update_env_lighting_mask(const double & x_coord, const double & y_coord, double radius_coord, bool is_on);
-		void cast_light_for_view(int x, int y, int radius, int row,
-		double start_slope, double end_slope, int xx, int xy, int yx,int yy);
-		void cast_light_for_player(int x, int y, int radius, int row,
-		double start_slope, double end_slope, int xx, int xy, int yx,int yy);
-		void cast_light_for_env(int x, int y, int radius, int row,
-		double start_slope, double end_slope, int xx, int xy, int yx,int yy, bool is_on);
+		
 		const bool getMask(double x, double y);
 		int getLum(double x, double y);
 		void reset_lighting_mask();
 		void make_test_map(int tile_size);
-
+		void reset_player_lighting_mask();
+		int get_tile(double x, double y){
+			return a[int(round(y/tile_size))+HEIGHT/tile_size*int(round(x/tile_size))].back();
+		}
 
 };
 

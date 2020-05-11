@@ -1,10 +1,8 @@
 #include "map.h"
 
-// Короче. Это ф-ция для рекурсивного алгоса шадоу-каста. Работает.
 
 
-
-void Map::cast_light_for_view(int x, int y, int radius, int row, double start_slope, double end_slope, int xx, int xy, int yx, int yy){
+void cast_light_for_view(Map * map, int x, int y, int radius, int row, double start_slope, double end_slope, int xx, int xy, int yx, int yy){
 
 	if(start_slope < end_slope){
 		return;
@@ -15,7 +13,7 @@ void Map::cast_light_for_view(int x, int y, int radius, int row, double start_sl
 		bool blocked = false;
 		for(int dx = -i, dy = -i; dx <= 0; dx++){
 			float l_slope = (dx - 0.5)/(dy + 0.5);
-			float r_slope = (dx + 0.5) / (dy - 0.5);
+			float r_slope = (dx + 0.5)/(dy - 0.5);
 			if (start_slope < r_slope){
 				continue;
 			}
@@ -23,7 +21,7 @@ void Map::cast_light_for_view(int x, int y, int radius, int row, double start_sl
 				break;
 			}
 
-			int sax = dx * xx + dy *xy;
+			int sax = dx*xx + dy*xy;
 			int say = dx*yx + dy*yy;
 
 			if((sax < 0 && abs(sax) > x) || (say < 0 && abs(say) > y)){
@@ -33,30 +31,40 @@ void Map::cast_light_for_view(int x, int y, int radius, int row, double start_sl
 			int ax = x + sax;
 			int ay = y + say;
 
-			if(ax>=WIDTH/tile_size || ay>=HEIGHT/tile_size){
+			bool exit = 0;
+
+			#pragma omp critical
+			if(ax>=WIDTH/map->tile_size || ay>=HEIGHT/map->tile_size){
+				exit = 1;
+			}
+
+			if(exit){
 				continue;
 			}
 
 			if(dx*dx+dy*dy < radius*radius){
 				//printf("%d, %d ", ax, ay);
-				render_mask[ay+HEIGHT/tile_size*ax] = 1;
+				#pragma omp critical
+				map->render_mask[ay+HEIGHT/map->tile_size*ax] = 1;
 			}
-
+			//#pragma omp critical
+			//{
 			if(blocked){
-				if(this->a[ay+ax*HEIGHT/tile_size].back() == 1 || this->a[ay+ax*HEIGHT/tile_size].back() == -1 || this->a[ay+ax*HEIGHT/tile_size].back() == 2){
-					next_start_slope = start_slope;
-					continue;
+				if(map->a[ay+ax*HEIGHT/map->tile_size].back() == 1 || map->a[ay+ax*HEIGHT/map->tile_size].back() == -1 || map->a[ay+ax*HEIGHT/map->tile_size].back() == 2){
+					next_start_slope = r_slope;
+					//continue;
 				}
 				else{
 					blocked = false;
 					start_slope = next_start_slope;
 				}
 			}
-			else if(this->a[ay+ax*HEIGHT/tile_size].back() == 1 || this->a[ay+ax*HEIGHT/tile_size].back() == -1){
+			else if(map->a[ay+ax*HEIGHT/map->tile_size].back() == 1 || map->a[ay+ax*HEIGHT/map->tile_size].back() == -1){
 				blocked = true;
 				next_start_slope = r_slope;
-				this->cast_light_for_view(x, y, radius, i+1, start_slope, l_slope, xx, xy, yx, yy);
+				cast_light_for_view(map, x, y, radius, i+1, start_slope, l_slope, xx, xy, yx, yy);
 			}
+			//}
 		}
 
 	if(blocked){
@@ -70,9 +78,9 @@ void Map::cast_light_for_view(int x, int y, int radius, int row, double start_sl
 
 };
 
-// Тоже самое, но тут для маски света поле зрения игрока
+// Тоже самое, но тут - поле зрения игрока
 
-void Map::cast_light_for_player(int x, int y, int radius, int row, double start_slope, double end_slope, int xx, int xy, int yx, int yy){
+void cast_light_for_player(Map * map, int x, int y, int radius, int row, double start_slope, double end_slope, int xx, int xy, int yx, int yy){
 
 	if(start_slope < end_slope){
 		return;
@@ -91,7 +99,7 @@ void Map::cast_light_for_player(int x, int y, int radius, int row, double start_
 				break;
 			}
 
-			int sax = dx * xx + dy *xy;
+			int sax = dx*xx + dy*xy;
 			int say = dx*yx + dy*yy;
 
 			if((sax < 0 && abs(sax) > x) || (say < 0 && abs(say) > y)){
@@ -101,29 +109,47 @@ void Map::cast_light_for_player(int x, int y, int radius, int row, double start_
 			int ax = x + sax;
 			int ay = y + say;
 
-			if(ax>=WIDTH/tile_size || ay>=HEIGHT/tile_size || ax < 0 || ay < 0){
+			bool exit = 0;
+
+			#pragma omp critical
+			if(ax>=WIDTH/map->tile_size || ay>=HEIGHT/map->tile_size || ax < 0 || ay < 0){
+				exit = 1;
+			}
+
+			if(exit){
 				continue;
 			}
 
 			if(dx*dx+dy*dy < radius*radius){
-				player_lighting_mask[ay+HEIGHT/tile_size*ax] = 255*(radius*radius-(ax-x)*(ax-x)-(ay-y)*(ay-y))/(radius*radius);
+				#pragma omp critical
+				{
+				if(map->player_lighting_mask.count(ay+HEIGHT/map->tile_size*ax) == 0){
+					map->player_lighting_mask[ay+HEIGHT/map->tile_size*ax] = 255*(radius*radius-(ax-x)*(ax-x)-(ay-y)*(ay-y))/(radius*radius);
+				}
+				else{
+					if(255*(radius*radius-(ax-x)*(ax-x)-(ay-y)*(ay-y))/(radius*radius) > map->player_lighting_mask[ay+HEIGHT/map->tile_size*ax])
+						map->player_lighting_mask[ay+HEIGHT/map->tile_size*ax] = 255*(radius*radius-(ax-x)*(ax-x)-(ay-y)*(ay-y))/(radius*radius);
+				}
+				}
 			}
-
+			//#pragma omp critical
+			//{
 			if(blocked){
-				if(this->a[ay+ax*HEIGHT/tile_size].back() == 1 || this->a[ay+ax*HEIGHT/tile_size].back() == -1){
-					next_start_slope = start_slope;
-					continue;
+				if(map->a[ay+ax*HEIGHT/map->tile_size].back() == 1 || map->a[ay+ax*HEIGHT/map->tile_size].back() == -1){
+					next_start_slope = r_slope;
+					//continue;
 				}
 				else{
 					blocked = false;
 					start_slope = next_start_slope;
 				}
 			}
-			else if(this->a[ay+ax*HEIGHT/tile_size].back() == 1 || this->a[ay+ax*HEIGHT/tile_size].back() == -1){
+			else if(map->a[ay+ax*HEIGHT/map->tile_size].back() == 1 || map->a[ay+ax*HEIGHT/map->tile_size].back() == -1){
 				blocked = true;
 				next_start_slope = r_slope;
-				this->cast_light_for_player(x, y, radius, i+1, start_slope, l_slope, xx, xy, yx, yy);
+				cast_light_for_player(map, x, y, radius, i+1, start_slope, l_slope, xx, xy, yx, yy);
 			}
+			//}
 		}
 
 	if(blocked){
@@ -137,7 +163,7 @@ void Map::cast_light_for_player(int x, int y, int radius, int row, double start_
 
 };
 
-// Это просто костыль, который я подсмотрел у чувака на гитхабе (он там писал шадоу-каст, но чуть иначе)
+// Это просто костыль, который я подсмотрел у пользователя на github (он там писал тот же алгоритм, но чуть иначе)
 
 static int multipliers[4][8] = {
     {1, 0, 0, -1, -1, 0, 0, 1},
@@ -147,8 +173,8 @@ static int multipliers[4][8] = {
 };
 
 /*
-	Краткое описание того, что делает апдейт.
-	По факту он вызывает шадоу-каст для каждого октета:
+	Краткое описание того, что делает update.
+	По факту он вызывает shadow-cast для каждого октета
 
 	собстенно для каждого октета в цикле я и считаю видимые клетки (делаю рекурсивный шадоу-каст)
 
@@ -161,15 +187,6 @@ static int multipliers[4][8] = {
 		 / | \
 		/  |  \
 	   /   |   \
-
-	Чтобы переписать вычисления хдесь паралленльно, надо каждую операцию в цикле запускать
-	в своей ветке (всего получится 8 -штук)
-
-	первая ветка, полседние 4 коэфицента - 1, 0, 0, 1
-	вторая ветка, последние 4 коэфицента - 0 , 1, 1, 0
-	и т.д.
-
-	(просто смотри соответсвующий n-элемент каждого столбца в multipliers)
 
 
 */
@@ -185,20 +202,15 @@ void Map::update_view_mask(const double & x_coord, const double & y_coord, doubl
 
 	render_mask[y+HEIGHT/tile_size*x] = 1;
 
+	#pragma omp parallel for
 	for(int i = 0; i < 8; i++){
-		this->cast_light_for_view(x, y, radius, 1, 1.0, 0.0, multipliers[0][i],
+		cast_light_for_view(this, x, y, radius, 1, 1.0, 0.0, multipliers[0][i],
 			multipliers[1][i], multipliers[2][i], multipliers[3][i]);
 	}
 
 
 }
 
-/*
-
-	Тот же самый алгос, но дял маски игрока света.
-	Также нужно переписать через параллельное программирование
-
-*/
 
 void Map::update_player_lighting_mask(const double & x_coord, const double & y_coord, double radius_coord){
 
@@ -207,16 +219,19 @@ void Map::update_player_lighting_mask(const double & x_coord, const double & y_c
 
 	int radius = int(round(radius_coord/tile_size));
 
-	player_lighting_mask.clear();
-
 	player_lighting_mask[y+HEIGHT/tile_size*x] = 255;
 
+	#pragma omp parallel for
 	for(int i = 0; i < 8; i++){
-		this->cast_light_for_player(x, y, radius, 1, 1.0, 0.0, multipliers[0][i],
+		cast_light_for_player(this, x, y, radius, 1, 1.0, 0.0, multipliers[0][i],
 			multipliers[1][i], multipliers[2][i], multipliers[3][i]);
 	}
 
 
+}
+
+void Map::reset_player_lighting_mask(){
+	player_lighting_mask.clear();
 }
 
 /*
@@ -264,7 +279,7 @@ int Map::getLum(double x, double y){
 
 */
 
-void Map::cast_light_for_env(int x, int y, int radius, int row, double start_slope, double end_slope, int xx, int xy, int yx, int yy, bool is_on){
+void cast_light_for_env(Map * map, int x, int y, int radius, int row, double start_slope, double end_slope, int xx, int xy, int yx, int yy, bool is_on){
 
 
 	if(start_slope < end_slope){
@@ -276,7 +291,7 @@ void Map::cast_light_for_env(int x, int y, int radius, int row, double start_slo
 		bool blocked = false;
 		for(int dx = -i, dy = -i; dx <= 0; dx++){
 			float l_slope = (dx - 0.5)/(dy + 0.5);
-			float r_slope = (dx + 0.5) / (dy - 0.5);
+			float r_slope = (dx + 0.5)/(dy - 0.5);
 			if (start_slope < r_slope){
 				continue;
 			}
@@ -284,7 +299,7 @@ void Map::cast_light_for_env(int x, int y, int radius, int row, double start_slo
 				break;
 			}
 
-			int sax = dx * xx + dy *xy;
+			int sax = dx*xx + dy*xy;
 			int say = dx*yx + dy*yy;
 
 			if((sax < 0 && abs(sax) > x) || (say < 0 && abs(say) > y)){
@@ -294,34 +309,45 @@ void Map::cast_light_for_env(int x, int y, int radius, int row, double start_slo
 			int ax = x + sax;
 			int ay = y + say;
 
-			if(ax>=WIDTH/tile_size || ay>=HEIGHT/tile_size || ax < 0 || ay < 0){
+			bool exit = 0;
+
+			#pragma omp critical
+			if(ax>=WIDTH/map->tile_size || ay>=HEIGHT/map->tile_size || ax < 0 || ay < 0){
+				exit = 1;
+			}
+
+			if(exit){
 				continue;
 			}
 
 			if(dx*dx+dy*dy < radius*radius){
 				if(is_on){
-					env_lighting_mask[ay+HEIGHT/tile_size*ax] = 255-30+30*(-abs(ax-x)-abs(ay-y)+radius)/radius;
+					 #pragma omp critical
+					map->env_lighting_mask[ay+HEIGHT/map->tile_size*ax] = 255-30+30*(-abs(ax-x)-abs(ay-y)+radius)/radius;
 				}
 				else{
-					env_lighting_mask.erase(ay+HEIGHT/tile_size*ax);
+					 #pragma omp critical
+					map->env_lighting_mask.erase(ay+HEIGHT/map->tile_size*ax);
 				}
 			}
-
+			//#pragma omp critical
+			//{
 			if(blocked){
-				if(this->a[ay+ax*HEIGHT/tile_size].back() == 1 || this->a[ay+ax*HEIGHT/tile_size].back() == -1 || this->a[ay+ax*HEIGHT/tile_size].back() == 2){
-					next_start_slope = start_slope;
-					continue;
+				if(map->a[ay+ax*HEIGHT/map->tile_size].back() == 1 || map->a[ay+ax*HEIGHT/map->tile_size].back() == -1 || map->a[ay+ax*HEIGHT/map->tile_size].back() == 2){
+					next_start_slope = r_slope;
+					//continue;
 				}
 				else{
 					blocked = false;
 					start_slope = next_start_slope;
 				}
 			}
-			else if(this->a[ay+ax*HEIGHT/tile_size].back() == 1 || this->a[ay+ax*HEIGHT/tile_size].back() == -1 || this->a[ay+ax*HEIGHT/tile_size].back() == 2){
+			else if(map->a[ay+ax*HEIGHT/map->tile_size].back() == 1 || map->a[ay+ax*HEIGHT/map->tile_size].back() == -1 || map->a[ay+ax*HEIGHT/map->tile_size].back() == 2){
 				blocked = true;
 				next_start_slope = r_slope;
-				this->cast_light_for_env(x, y, radius, i+1, start_slope, l_slope, xx, xy, yx, yy, is_on);
+				cast_light_for_env(map, x, y, radius, i+1, start_slope, l_slope, xx, xy, yx, yy, is_on);
 			}
+			//}
 		}
 
 	if(blocked){
@@ -335,11 +361,6 @@ void Map::cast_light_for_env(int x, int y, int radius, int row, double start_slo
 
 };
 
-/*
-
- Снова тот же самый метод, снова требуется переписать параллельно.
-
-*/
 
 
 void Map::update_env_lighting_mask(const double & x_coord, const double & y_coord, double radius_coord, bool is_on){
@@ -351,8 +372,9 @@ void Map::update_env_lighting_mask(const double & x_coord, const double & y_coor
 
 	env_lighting_mask[y+HEIGHT/tile_size*x] = 255;
 
+	#pragma omp parallel for
 	for(int i = 0; i < 8; i++){
-		this->cast_light_for_env(x, y, radius, 1, 1.0, 0.0, multipliers[0][i],
+		cast_light_for_env(this, x, y, radius, 1, 1.0, 0.0, multipliers[0][i],
 			multipliers[1][i], multipliers[2][i], multipliers[3][i], is_on);
 	}
 

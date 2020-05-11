@@ -254,6 +254,13 @@ void Map::make_test_map(int tile_size){
     a[7+HEIGHT/tile_size*5].push_back(1);
 
 
+    for(int i = 0; i< 4; i++){
+        for(int j = 0; j < 4; j ++){
+            a[10+i+HEIGHT/tile_size*(15+j)].push_back(3);
+        }
+    }
+
+
     a[20+HEIGHT/tile_size*20].push_back(6);
 
 }

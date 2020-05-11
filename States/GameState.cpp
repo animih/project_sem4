@@ -96,7 +96,7 @@ void GameState::update(const float & dt){
 }
 
 void GameState::update(){
-
+	map->reset_player_lighting_mask();
 	for(auto chr : active_characters){
 		for(auto mob : active_mobs){
 			mob->react(chr);
@@ -165,12 +165,29 @@ void GameState::render(sf::RenderWindow * window){
 	}
 
 	this->player->renderUI(window);
-
 }
 
 
 void GameState::updateKeybinds(const float & dt){
-	this->checkForQuit();
+	//this->checkForQuit();
+	static bool exit = 0;
+
+	int i = 0;
+
+
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+	{
+		exit =1;
+	}
+	else if(exit){
+		while(i < 100)
+			i+= 1;
+		//view->reset(sf::FloatRect(0, 0, 640*2, 480*2));
+		//window->setView(*view);
+		printf("\n PauseMenu");
+		this->states->push(new PauseState(this->window, this, states, player->x-window->getSize().x/2, player->y-window->getSize().y/2));
+		exit = 0;
+	}
 
 }
 
