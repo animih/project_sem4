@@ -12,8 +12,6 @@
 4) матрица тайлов
 5) размеры матрицы (n по y и m по x)
 
-Если потребуется переписать ф-цию со специфичными приоритетами тайлов
-
 */
 
 #ifndef A_STAR_H
@@ -41,7 +39,11 @@ bool operator()(const Node &nd1, const Node &nd2){
 };
 
 
-//это для коридоров
+/*
+	
+	это для коридоров
+
+*/
 
 std::vector<int> A_star(int x1, int y1, int x2, int y2, std::vector<std::list <char>> & a, int n, int m){
 
@@ -69,11 +71,8 @@ std::vector<int> A_star(int x1, int y1, int x2, int y2, std::vector<std::list <c
 		open.erase(open.begin());
 
 		if(current.x == x2 && current.y == y2){
-			//printf("found");
 			break;
 		}
-
-		//printf("%d, %d \n", current.x, current.y);
 
 		for(int i = 0; i < 4; i ++){
 			switch(i){
@@ -164,7 +163,11 @@ std::vector<int> A_star(int x1, int y1, int x2, int y2, std::vector<std::list <c
 
 }
 
-// это для путей внутри
+/*
+
+Это для путей внутри
+
+*/
 
 std::vector<int> A_star_inside(int x1, int y1, int x2, int y2, std::vector<std::list <char>> & a, int n, int m){
 
@@ -192,11 +195,8 @@ std::vector<int> A_star_inside(int x1, int y1, int x2, int y2, std::vector<std::
 
 		
 		if(current.x == x2 && current.y == y2){
-			//printf("found");
 			break;
 		}
-
-		//printf("%d, %d \n", current.x, current.y);
 
 		for(int i = 0; i < 4; i ++){
 			switch(i){
@@ -234,7 +234,6 @@ std::vector<int> A_star_inside(int x1, int y1, int x2, int y2, std::vector<std::
 				add += 6666;
 			}
 			add += cost_so_far[current.y+n*current.x];
-			//printf("%d, %d, %d \n", add, x, y);
 
 			if(cost_so_far.count(y+n*x) == 0 || add < cost_so_far[y+n*x]){
 				cost_so_far[y+n*x] = add;

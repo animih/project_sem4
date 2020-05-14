@@ -174,8 +174,8 @@ double * Map::make_map(int * size, int tile_size, int radius, int average, int n
 
     double * coords = new double[2];
 
-    coords[0] = (Rooms->Final[0].x_left+Rooms->Final[0].x_right)/2;
-    coords[1] = (Rooms->Final[0].y_top+Rooms->Final[0].y_bottom)/2;
+    coords[0] = (Rooms->Final[0]->x_left+Rooms->Final[0]->x_right)/2;
+    coords[1] = (Rooms->Final[0]->y_top+Rooms->Final[0]->y_bottom)/2;
 
     // После гены листы удаляются
 
@@ -207,8 +207,6 @@ double * Map::make_map(int * size, int tile_size, int radius, int average, int n
 
 
     }
-
-    //size = new int[2];
 
     size[0] = WIDTH/tile_size;
     size[1] = HEIGHT/tile_size;
@@ -262,5 +260,68 @@ void Map::make_test_map(int tile_size){
 
 
     a[20+HEIGHT/tile_size*20].push_back(6);
+
+}
+
+double * Map::make_boss_battle(int tile_size, std::map<std::string, std::vector<double>> & buf){
+
+    this->tile_size = tile_size;
+
+    render_mask.clear();
+    env_lighting_mask.clear();
+
+
+
+
+
+    a.clear();
+
+    for(int j = 0; j < HEIGHT/tile_size*WIDTH/tile_size; j++){
+        a.push_back(std::list<char>());
+    }
+
+    for(int i = 0; i < 30; i++){
+        for(int j = 0; j < 30; j++){
+            if(i == 0 || j == 0|| i == 29 || j == 29)
+                a[j+HEIGHT/tile_size*i].push_back(1);
+            else
+                a[j+HEIGHT/tile_size*i].push_back(0);
+        }
+    }
+
+    for(int i = -1; i < 2; i++){
+        for(int j = -1; j < 2; j++){
+            a[j+4+HEIGHT/tile_size*(i+4)].push_back(1);
+        }
+    }
+
+    for(int i = -1; i < 2; i++){
+        for(int j = -1; j < 2; j++){
+            a[j+4+HEIGHT/tile_size*(i+25)].push_back(1);
+        }
+    }
+
+    for(int i = -1; i < 2; i++){
+        for(int j = -1; j < 2; j++){
+            a[j+25+HEIGHT/tile_size*(i+25)].push_back(1);
+        }
+    }
+
+    for(int i = -1; i < 2; i++){
+        for(int j = -1; j < 2; j++){
+            a[j+25+HEIGHT/tile_size*(i+4)].push_back(1);
+        }
+    }
+
+    buf["Boss"].push_back(10*tile_size);
+    buf["Boss"].push_back(5*tile_size);
+
+
+    double * coords = new double[2];
+
+    coords[0] = 10*tile_size;
+    coords[1] = 10*tile_size;
+
+    return coords;
 
 }

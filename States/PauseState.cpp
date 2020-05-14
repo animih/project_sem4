@@ -48,7 +48,6 @@ void PauseState::render(sf::RenderWindow * window){
 }
 
 void PauseState::updateKeybinds(const float & dt){
-	//this->checkForQuit();
 	if(continue_btm->isPressed()){
 		this->quit = true;
 	}

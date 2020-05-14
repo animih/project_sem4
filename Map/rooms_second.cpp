@@ -26,11 +26,11 @@ void RoomList::transpose_to_matrix(std::vector<std::list <char>>& a){
 
 	for(int i = 0; i < Final.size(); i ++){
 
-		u1 = int(round(Final[i].x_left/tile_size));
-		v1 = int(round(Final[i].y_top/tile_size));
+		u1 = int(round(Final[i]->x_left/tile_size));
+		v1 = int(round(Final[i]->y_top/tile_size));
 
-		u2 = int(round(Final[i].x_right/tile_size));
-		v2 = int(round(Final[i].y_bottom/tile_size));
+		u2 = int(round(Final[i]->x_right/tile_size));
+		v2 = int(round(Final[i]->y_bottom/tile_size));
 
 		for(int k = u1; k <= u2; k++){
 			a[v1+HEIGHT/tile_size*k].back() = 1;
@@ -282,7 +282,7 @@ void Map::render_region(RenderWindow * window, double x_left, double x_right, do
 					tile.setFillColor(sf::Color(255, 25, 0, a));
 					window->draw(tile);
 					break;
-				// спавн мобов/потенциальыне точки для их патрулирования
+				// спавн мобов/потенциальные точки для их патрулирования
 				case -3:
 					tile.setFillColor(sf::Color(204, 115, 0, a));
 					window->draw(tile);
@@ -327,18 +327,18 @@ void Map::build_Hallways(){
 			if(u <= i){
 				continue;
 			}
-			int x1 = int(round(((Rooms->Final[i].x_left+Rooms->Final[i].x_right)/2)/tile_size));
-			int y1 = int(round(((Rooms->Final[i].y_top+Rooms->Final[i].y_bottom)/2)/tile_size));
+			int x1 = int(round(((Rooms->Final[i]->x_left+Rooms->Final[i]->x_right)/2)/tile_size));
+			int y1 = int(round(((Rooms->Final[i]->y_top+Rooms->Final[i]->y_bottom)/2)/tile_size));
 
-			int x2 = int(round(((Rooms->Final[u].x_left+Rooms->Final[u].x_right)/2)/tile_size));
-			int y2 = int(round(((Rooms->Final[u].y_top+Rooms->Final[u].y_bottom)/2)/tile_size));
+			int x2 = int(round(((Rooms->Final[u]->x_left+Rooms->Final[u]->x_right)/2)/tile_size));
+			int y2 = int(round(((Rooms->Final[u]->y_top+Rooms->Final[u]->y_bottom)/2)/tile_size));
 
-			std::vector<int> res = A_star(x1, y1, x2, y2, a, HEIGHT/tile_size, WIDTH/tile_size); // Могучий A* решает всё.
+			std::vector<int> res = A_star(x1, y1, x2, y2, a, HEIGHT/tile_size, WIDTH/tile_size);
 
 			for(int j = 0; j < res.size(); j+=2){
 				if(a[res[j+1]+res[j]*HEIGHT/tile_size].back() == 1 ){
 					if( a[res[j+1+2]+res[j+2]*HEIGHT/tile_size].back() != 1)
-						if(Rooms->Final[i].color == 6){
+						if(Rooms->Final[i]->color == 6){
 							a[res[j+1]+res[j]*HEIGHT/tile_size].back() = 9; // закрытая комната
 						}
 						else{
@@ -415,7 +415,7 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 		/*
 	
-			В зелённые и синие и жёлтые комнаты с вероятность 1/2 монтирую колоны 
+			В зелённые и синие и жёлтые комнаты с вероятность 1/5 монтирую колоны 
 			(объект размером 3x3, по бокам стенки, в центре - пусто)
 
 			Объязательно проверю, чтобы моя колонна не загородила проход или примкунла к стене
@@ -424,18 +424,15 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 		*/
 
-		if(Rooms->Final[i].color == 3 || Rooms->Final[i].color == 2 || Rooms->Final[i].color == 1){
-
-			if(rand()%2)
-				continue;
+		if(Rooms->Final[i]->color == 3 || Rooms->Final[i]->color == 2 || Rooms->Final[i]->color == 1 && rand()%5 == 0){
 
 			int value = rand()%3;
 
-			int x_left = int(round(((Rooms->Final[i].x_left)/tile_size)));
-			int x_right = int(round(((Rooms->Final[i].x_right)/tile_size)));
+			int x_left = int(round(((Rooms->Final[i]->x_left)/tile_size)));
+			int x_right = int(round(((Rooms->Final[i]->x_right)/tile_size)));
 
-			int y_top = int(round(((Rooms->Final[i].y_top)/tile_size)));
-			int y_bottom = int(round(((Rooms->Final[i].y_bottom)/tile_size)));
+			int y_top = int(round(((Rooms->Final[i]->y_top)/tile_size)));
+			int y_bottom = int(round(((Rooms->Final[i]->y_bottom)/tile_size)));
 
 			for(int l = 0; l < value; l++){
 
@@ -492,26 +489,22 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 		*/
 
-		if(Rooms->Final[i].color == 1){
-
-			if(rand()%2){
-				continue; // 50 % - вероятность провала
-			}
+		if(Rooms->Final[i]->color == 1 || rand()%2 != 0){
 
 			for(int u : Rooms->graph->a[i]){
 
-			int x1_left = int(round(((Rooms->Final[i].x_left)/tile_size)));
-			int x1_right = int(round(((Rooms->Final[i].x_right)/tile_size)));
+			int x1_left = int(round(((Rooms->Final[i]->x_left)/tile_size)));
+			int x1_right = int(round(((Rooms->Final[i]->x_right)/tile_size)));
 
-			int y1_top = int(round(((Rooms->Final[i].y_top)/tile_size)));
-			int y1_bottom = int(round(((Rooms->Final[i].y_bottom)/tile_size)));
+			int y1_top = int(round(((Rooms->Final[i]->y_top)/tile_size)));
+			int y1_bottom = int(round(((Rooms->Final[i]->y_bottom)/tile_size)));
 
 			// Случайная точка в исходной комнате
 			int x1 = rand()%(x1_right-x1_left)+x1_left+1;
 			int y1 = rand()%(y1_bottom-y1_top)+y1_top+1;
 			// центр комнат соседней
-			int x2 = int(round(((Rooms->Final[u].x_left+Rooms->Final[u].x_right)/2)/tile_size));
-			int y2 = int(round(((Rooms->Final[u].y_top+Rooms->Final[u].y_bottom)/2)/tile_size));
+			int x2 = int(round(((Rooms->Final[u]->x_left+Rooms->Final[u]->x_right)/2)/tile_size));
+			int y2 = int(round(((Rooms->Final[u]->y_top+Rooms->Final[u]->y_bottom)/2)/tile_size));
 
 			std::vector<int> res = A_star_inside(x1, y1, x2, y2, a, HEIGHT/tile_size, WIDTH/tile_size);
 			int counter = 0;
@@ -589,15 +582,15 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 		*/
 
-		if(Rooms->Final[i].color == 2){
+		if(Rooms->Final[i]->color == 2){
 
 			int counter2 = rand()%4; // число "очагов"
 
-			int x_left = int(round(((Rooms->Final[i].x_left)/tile_size)));
-			int x_right = int(round(((Rooms->Final[i].x_right)/tile_size)));
+			int x_left = int(round(((Rooms->Final[i]->x_left)/tile_size)));
+			int x_right = int(round(((Rooms->Final[i]->x_right)/tile_size)));
 
-			int y_top = int(round(((Rooms->Final[i].y_top)/tile_size)));
-			int y_bottom = int(round(((Rooms->Final[i].y_bottom)/tile_size)));
+			int y_top = int(round(((Rooms->Final[i]->y_top)/tile_size)));
+			int y_bottom = int(round(((Rooms->Final[i]->y_bottom)/tile_size)));
 
 			for(int l = 0; l < counter2; l++){
 
@@ -654,19 +647,21 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 		}
 
-		if(Rooms->Final[i].color != 1){
+		if(Rooms->Final[i]->color != 1){
 
 
-			int x_left = int(round(((Rooms->Final[i].x_left)/tile_size)));
-			int x_right = int(round(((Rooms->Final[i].x_right)/tile_size)));
+			int x_left = int(round(((Rooms->Final[i]->x_left)/tile_size)));
+			int x_right = int(round(((Rooms->Final[i]->x_right)/tile_size)));
 
-			int y_top = int(round(((Rooms->Final[i].y_top)/tile_size)));
-			int y_bottom = int(round(((Rooms->Final[i].y_bottom)/tile_size)));
+			int y_top = int(round(((Rooms->Final[i]->y_top)/tile_size)));
+			int y_bottom = int(round(((Rooms->Final[i]->y_bottom)/tile_size)));
+
+			bool no_no = 1;
 
 			if(abs(x_left-x_right) < 5 || abs(y_top-y_bottom) < 5)
-					continue;
+				no_no = 0;
 
-			if(rand()%3){
+			if(rand()%3 && no_no){
 
 				int x;
 				int y;
@@ -708,13 +703,13 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 				}
 
 			}
-			else if(Rooms->Final[i].color == 3){
+			else if(Rooms->Final[i]->color == 3){
 
-				int x_left = int(round(((Rooms->Final[i].x_left)/tile_size)));
-				int x_right = int(round(((Rooms->Final[i].x_right)/tile_size)));
+				int x_left = int(round(((Rooms->Final[i]->x_left)/tile_size)));
+				int x_right = int(round(((Rooms->Final[i]->x_right)/tile_size)));
 
-				int y_top = int(round(((Rooms->Final[i].y_top)/tile_size)));
-				int y_bottom = int(round(((Rooms->Final[i].y_bottom)/tile_size)));
+				int y_top = int(round(((Rooms->Final[i]->y_top)/tile_size)));
+				int y_bottom = int(round(((Rooms->Final[i]->y_bottom)/tile_size)));
 
 				if(abs(x_left-x_right) < 5 || abs(y_top-y_bottom) < 5)
 					continue;
@@ -765,13 +760,13 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 			}
 		}
 		
-		if(Rooms->Final[i].color == 6 && !flag_for_locked){
+		if(Rooms->Final[i]->color == 6 && !flag_for_locked){
 
-			int u1 = int(round(Rooms->Final[i].x_left/tile_size));
-			int v1 = int(round(Rooms->Final[i].y_top/tile_size));
+			int u1 = int(round(Rooms->Final[i]->x_left/tile_size));
+			int v1 = int(round(Rooms->Final[i]->y_top/tile_size));
 
-			int u2 = int(round(Rooms->Final[i].x_right/tile_size));
-			int v2 = int(round(Rooms->Final[i].y_bottom/tile_size));
+			int u2 = int(round(Rooms->Final[i]->x_right/tile_size));
+			int v2 = int(round(Rooms->Final[i]->y_bottom/tile_size));
 
 			for(int k = u1+1; k <= u2-1; k++){
 				for(int l = v1+1; l <= v2-1; l++){
@@ -782,17 +777,17 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 		}
 
-		if(Rooms->Final[i].color == 4){
+		if(Rooms->Final[i]->color == 4){
 
-			int u1 = int(round(Rooms->Final[i].x_left/tile_size));
-			int v1 = int(round(Rooms->Final[i].y_top/tile_size));
+			int u1 = int(round(Rooms->Final[i]->x_left/tile_size));
+			int v1 = int(round(Rooms->Final[i]->y_top/tile_size));
 
-			int u2 = int(round(Rooms->Final[i].x_right/tile_size));
-			int v2 = int(round(Rooms->Final[i].y_bottom/tile_size));
-
+			int u2 = int(round(Rooms->Final[i]->x_right/tile_size));
+			int v2 = int(round(Rooms->Final[i]->y_bottom/tile_size));
+			bool oh_no = 1;
 
 			if(abs(u2-u1) < 5 || abs(v1-v2) < 5)
-				continue;
+				oh_no = 0;
 
 			int x_w;
 			int y_w;
@@ -816,7 +811,7 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 					break;
 
 			}
-			if(a[y_w+x_w*HEIGHT/tile_size].back() == 0){
+			if(a[y_w+x_w*HEIGHT/tile_size].back() == 0 && oh_no){
 				buf["Ward"].push_back(x_w*tile_size);
 				buf["Ward"].push_back(y_w*tile_size);
 			}
@@ -834,7 +829,7 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 				}	
 
 
-				if(a[y+x*HEIGHT/tile_size].back() == 0){
+				if(a[y+x*HEIGHT/tile_size].back() == 0 && oh_no){
 					buf["Zombie"].push_back(x*tile_size);
 					buf["Zombie"].push_back(y*tile_size);
 
@@ -848,6 +843,11 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 
 
+		}
+
+		if(Rooms->Final[i]->color == 5){
+			buf["Ladder"].push_back((Rooms->Final[i]->x_left+Rooms->Final[i]->x_right)/2);
+			buf["Ladder"].push_back((Rooms->Final[i]->y_bottom+Rooms->Final[i]->y_top)/2);
 		}
 
 
@@ -869,11 +869,11 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 				continue;
 			}
 
-			int x_left = int(round(((Rooms->Final[i].x_left)/tile_size)));
-			int x_right = int(round(((Rooms->Final[i].x_right)/tile_size)));
+			int x_left = int(round(((Rooms->Final[i]->x_left)/tile_size)));
+			int x_right = int(round(((Rooms->Final[i]->x_right)/tile_size)));
 
-			int y_top = int(round(((Rooms->Final[i].y_top)/tile_size)));
-			int y_bottom = int(round(((Rooms->Final[i].y_bottom)/tile_size)));
+			int y_top = int(round(((Rooms->Final[i]->y_top)/tile_size)));
+			int y_bottom = int(round(((Rooms->Final[i]->y_bottom)/tile_size)));
 
 			std::vector<int> exits;
 
@@ -915,8 +915,6 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 			std::vector <int> cur;
 
 			int end = exits.size();
-
-			//printf("%d \n", end);
 			
 			for(int k = 0; k <exits.size(); k+=2){
 				if(exits[k] == -1){
@@ -980,7 +978,7 @@ int sign(int a){
  так, ну вот этот метод определяет пересекает ли прямая,
   соединяющая две произвольные точки какой-нибдуь непрозрачный тайл (стена или дверь)
 
-  простым словами, тут обрисовывается "клетками прямая.
+  простым словами, тут обрисовывается клетками прямая.
 
  */
 

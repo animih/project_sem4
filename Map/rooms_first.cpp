@@ -4,44 +4,44 @@
 
 #define INF 9999999999
 
-//Просто костыль для облегчения написания кода
+//Просто для уддобства
 
-#define num1_top Final[i].y_top
-#define num1_bottom  Final[i].y_bottom
-#define num1_left Final[i].x_left
-#define num1_right Final[i].x_right
-#define num1_x (Final[i].x_left+Final[i].x_right)/2
-#define num1_y (Final[i].y_bottom+Final[i].y_top)/2
+#define num1_top Final[i]->y_top
+#define num1_bottom  Final[i]->y_bottom
+#define num1_left Final[i]->x_left
+#define num1_right Final[i]->x_right
+#define num1_x (Final[i]->x_left+Final[i]->x_right)/2
+#define num1_y (Final[i]->y_bottom+Final[i]->y_top)/2
 
-#define num2_top Final[*it].y_top
-#define num2_bottom Final[*it].y_bottom
-#define num2_left Final[*it].x_left
-#define num2_right Final[*it].x_right
-#define num2_x (Final[*it].x_left+Final[*it].x_right)/2
-#define num2_y (Final[*it].y_bottom+Final[*it].y_top)/2
+#define num2_top Final[*it]->y_top
+#define num2_bottom Final[*it]->y_bottom
+#define num2_left Final[*it]->x_left
+#define num2_right Final[*it]->x_right
+#define num2_x (Final[*it]->x_left+Final[*it]->x_right)/2
+#define num2_y (Final[*it]->y_bottom+Final[*it]->y_top)/2
 
 RoomList::RoomList(){}
 
 // 0 - base, 1 - Все комнаты раскиданы
-bool RoomList::is_collide(std::_List_iterator<Room> room1, std::_List_iterator<Room>room2){
+bool RoomList::is_collide(std::_List_iterator<Room *> room1, std::_List_iterator<Room *>room2){
 
 	float * coord1 = (float*)malloc(2*sizeof(float));
 	int * size1 = (int*)malloc(2*sizeof(int));
 
-	coord1[0] = (room1->x_left + room1->x_right)/2;
-	coord1[1] = (room1->y_bottom + room1->y_top)/2;
+	coord1[0] = ((*room1)->x_left + (*room1)->x_right)/2;
+	coord1[1] = ((*room1)->y_bottom + (*room1)->y_top)/2;
 
-	size1[0] = (room1->x_right - room1->x_left)/2;
-	size1[1] = (room1->y_bottom - room1->y_top)/2;
+	size1[0] = ((*room1)->x_right - (*room1)->x_left)/2;
+	size1[1] = ((*room1)->y_bottom - (*room1)->y_top)/2;
 
 	float * coord2 = (float*)malloc(2*sizeof(float));
 	int * size2 = (int*)malloc(2*sizeof(int));
 
-	coord2[0] = (room2->x_left + room2->x_right)/2;
-	coord2[1] = (room2->y_bottom + room2->y_top)/2;
+	coord2[0] = ((*room2)->x_left + (*room2)->x_right)/2;
+	coord2[1] = ((*room2)->y_bottom + (*room2)->y_top)/2;
 
-	size2[0] = (room2->x_right - room2->x_left)/2;
-	size2[1] = (room2->y_bottom - room2->y_top)/2;
+	size2[0] = ((*room2)->x_right - (*room2)->x_left)/2;
+	size2[1] = ((*room2)->y_bottom - (*room2)->y_top)/2;
 
 	return fabs(coord1[0]-coord2[0]) <= (size1[0]+ size2[0]+1)*1.01 &&
 		fabs(coord1[1]-coord2[1]) <= (size1[1]+ size2[1]+1)*1.01;
@@ -62,17 +62,17 @@ bool RoomList::push_rooms(float time){
 			
 			if(is_collide(it1, it2)){
 				flag =0;
-				speedx = (it1->x_right + it1->x_left - it2->x_right - it2->x_left)/2;
-				speedy = (it1->y_top + it1->y_bottom - it2->y_top - it2->y_bottom)/2;
+				speedx = ((*it1)->x_right + (*it1)->x_left - (*it2)->x_right - (*it2)->x_left)/2;
+				speedy = ((*it1)->y_top + (*it1)->y_bottom - (*it2)->y_top - (*it2)->y_bottom)/2;
 
-				it1->speedx += speedx;
-				it1->speedy += speedy;
+				(*it1)->speedx += speedx;
+				(*it1)->speedy += speedy;
 
-				it2->speedx -= speedx;
-				it2->speedy -= speedy;
+				(*it2)->speedx -= speedx;
+				(*it2)->speedy -= speedy;
 
-				it1->num_neighbors++;
-				it2->num_neighbors++;
+				(*it1)->num_neighbors++;
+				(*it2)->num_neighbors++;
 
 			}
 			++it2;
@@ -82,15 +82,15 @@ bool RoomList::push_rooms(float time){
 	}
 
 	for(auto it = list.begin(); it != list.end(); ++it){
-		it->move(time);
+		(*it)->move(time);
 	}
 
 	return flag;
 }
 
 void RoomList::update(RenderWindow * window){
-	for(Room dung : list){
-		dung.upd(window);
+	for(Room * dung : list){
+		dung->upd(window);
 	}
 
 }
@@ -119,11 +119,8 @@ void RoomList::generate_rooms(int radius, int average, int total_number){
 
 		random_size(average, size, tile_size);
 
-
-
-		Room room_member(coord[0]-size[0]/2., coord[0]+size[0]/2.,
-			coord[1]-size[1]/2., coord[1]+size[1]/2., tile_size);
-		list.push_front(room_member);
+		list.push_front(new Room(coord[0]-size[0]/2., coord[0]+size[0]/2.,
+			coord[1]-size[1]/2., coord[1]+size[1]/2., tile_size));
 	}
 
 	
@@ -144,11 +141,11 @@ void RoomList::TriEdges(){
 
 	for(auto it = list.begin(); it != list.end();){
 
-		if((it->x_right-it->x_left)*(it->y_bottom - it->y_top) > average*average*1.525){
-		Final.push_back(*it);
+		if(((*it)->x_right-(*it)->x_left)*((*it)->y_bottom - (*it)->y_top) > average*average*1.525){
+		Final.push_back((*it));
 		
-		coords.push_back((it->x_right + it->x_left)/2);
-		coords.push_back((it->y_bottom + it->y_top)/2);
+		coords.push_back(((*it)->x_right + (*it)->x_left)/2);
+		coords.push_back(((*it)->y_bottom + (*it)->y_top)/2);
 		auto it_del = it;
 		++it;
 		list.erase(it_del);
@@ -194,13 +191,13 @@ void RoomList::DrawEdges(RenderWindow * window){
 	auto color = sf::Color::White;
 
 	for(int i = 0; i < Final.size(); i++){
-		Final[i].upd(window);
+		Final[i]->upd(window);
 	}
 
 	
 	for(int i = 0; i < Final.size()-1; i++){
-		line[0].position =  sf::Vector2f((Final[i].x_left+Final[i].x_right)/2, 
-			(Final[i].y_bottom+Final[i].y_top)/2);
+		line[0].position =  sf::Vector2f((Final[i]->x_left+Final[i]->x_right)/2, 
+			(Final[i]->y_bottom+Final[i]->y_top)/2);
 		for(int u : graph->a[i]){
 			if(u == i){
 				printf("error. Cycle detected \n"); //Просто проверка на случай если мы сделали цикл
@@ -208,8 +205,8 @@ void RoomList::DrawEdges(RenderWindow * window){
 			}
 			if(u > i){
 				
-				line[1].position =  sf::Vector2f((Final[u].x_left+Final[u].x_right)/2, 
-				(Final[u].y_bottom+Final[u].y_top)/2);
+				line[1].position =  sf::Vector2f((Final[u]->x_left+Final[u]->x_right)/2, 
+				(Final[u]->y_bottom+Final[u]->y_top)/2);
 
 				window->draw(line);
 			}
@@ -272,8 +269,8 @@ void RoomList::BuildTree(){
 				continue;
 			}
 
-			ran = square((Final[u].x_left+Final[u].x_right) - (Final[v].x_left+Final[v].x_right))
-			+ square((Final[u].y_bottom+Final[u].y_top) - (Final[v].y_bottom+Final[v].y_top));
+			ran = square((Final[u]->x_left+Final[u]->x_right) - (Final[v]->x_left+Final[v]->x_right))
+			+ square((Final[u]->y_bottom+Final[u]->y_top) - (Final[v]->y_bottom+Final[v]->y_top));
 			if(ran < weight[u]){
 				weight[u] = ran;
 				parrent[u] = v;
@@ -296,7 +293,7 @@ void RoomList::BuildTree(){
 	int n = rand()%number;
 
 	/* Здесь происходит возвращение части рёбер из триангуляции
-		По-просту говоря, это нужно для наличия проходных путей.
+		По-простому говоря, это нужно для наличия проходных путей.
 	*/
 
 	
@@ -356,7 +353,7 @@ void RoomList::AddWalkRooms(){
 	}
 	
 	
-	for(Room room: list){
+	for(Room * room: list){
 		flag = 1;
 		for(int i = 0; i < num; i++){
 			auto it_end =  graph->a[i].end();
@@ -364,15 +361,15 @@ void RoomList::AddWalkRooms(){
 
 				k = (num1_y - num2_y)/(num1_x - num2_x);
 
-				if( ( (k*(room.x_left - num1_x) + num1_y - room.y_top)*(k*(room.x_right - num1_x) + num1_y- room.y_bottom) < 0 
-					&& (room.x_left - min(num1_left, num2_left) )*(room.x_left - max(num1_right, num2_right)) < 0 && ((room.y_bottom+room.y_top)/2 - num1_y) * ((room.y_bottom+room.y_top)/2 - num2_y) < 0 ) || 
-					( (k*(room.x_right - num1_x) + num1_y - room.y_top)*(k*(room.x_left - num1_x) + num1_y- room.y_bottom) < 0 
-					&& (room.x_right - min(num1_left, num2_left) )*(room.x_right - max(num1_right, num2_right)) < 0 && ((room.y_bottom+room.y_top)/2 - num1_y) * ((room.y_bottom+room.y_top)/2 - num2_y) < 0 ) ||
+				if( ( (k*(room->x_left - num1_x) + num1_y - room->y_top)*(k*(room->x_right - num1_x) + num1_y- room->y_bottom) < 0 
+					&& (room->x_left - min(num1_left, num2_left) )*(room->x_left - max(num1_right, num2_right)) < 0 && ((room->y_bottom+room->y_top)/2 - num1_y) * ((room->y_bottom+room->y_top)/2 - num2_y) < 0 ) || 
+					( (k*(room->x_right - num1_x) + num1_y - room->y_top)*(k*(room->x_left - num1_x) + num1_y- room->y_bottom) < 0 
+					&& (room->x_right - min(num1_left, num2_left) )*(room->x_right - max(num1_right, num2_right)) < 0 && ((room->y_bottom+room->y_top)/2 - num1_y) * ((room->y_bottom+room->y_top)/2 - num2_y) < 0 ) ||
 
-					( (1/k*(room.y_top - num1_y) + num1_x - room.x_left)*(1/k*(room.y_bottom - num1_y) + num1_x - room.x_right) < 0 
-					&& (room.y_top - min(num1_top, num2_top))*(room.y_top - max(num1_bottom, num2_bottom)) < 0 && ((room.x_left+room.x_right)/2 - num1_x) * ((room.x_left+room.x_right)/2 - num2_x) < 0 ) || 
-					( (1/k*(room.y_bottom - num1_y) + num1_x - room.x_left)*(1/k*(room.y_top - num1_y) + num1_x - room.x_right) < 0 
-					&& (room.y_bottom - min(num1_top, num2_top))*(room.y_bottom - max(num1_bottom, num2_bottom)) < 0 && ((room.x_left+room.x_right)/2 - num1_x) * ((room.x_left+room.x_right)/2 - num2_x) < 0 ) ){
+					( (1/k*(room->y_top - num1_y) + num1_x - room->x_left)*(1/k*(room->y_bottom - num1_y) + num1_x - room->x_right) < 0 
+					&& (room->y_top - min(num1_top, num2_top))*(room->y_top - max(num1_bottom, num2_bottom)) < 0 && ((room->x_left+room->x_right)/2 - num1_x) * ((room->x_left+room->x_right)/2 - num2_x) < 0 ) || 
+					( (1/k*(room->y_bottom - num1_y) + num1_x - room->x_left)*(1/k*(room->y_top - num1_y) + num1_x - room->x_right) < 0 
+					&& (room->y_bottom - min(num1_top, num2_top))*(room->y_bottom - max(num1_bottom, num2_bottom)) < 0 && ((room->x_left+room->x_right)/2 - num1_x) * ((room->x_left+room->x_right)/2 - num2_x) < 0 ) ){
 
 					if(flag){
 						graph->a.push_back({});
@@ -427,23 +424,23 @@ void RoomList::AddWalkRooms(){
 
 			counter2 += 1;
 			if(counter2 < 3)
-				Final[i].color = 5;
+				Final[i]->color = 5;
 			else
-				Final[i].color = rand()%4+1;
-			printf("%d : %d \n", i, Final[i].color);
+				Final[i]->color = rand()%4+1;
+			printf("%d : %d \n", i, Final[i]->color);
 			continue;
 		}
 		if(graph->a[i].size() == 1 && counter < 2){
-			Final[i].color = 6;
+			Final[i]->color = 6;
 			counter += 1;
-			printf("%d : %d \n", i, Final[i].color);
+			printf("%d : %d \n", i, Final[i]->color);
 			continue;
 		}
 		else
 			while(1){
 				flag2 = 1;
 				for(int u : graph->a[i]){
-					if(Final[u].color == color){
+					if(Final[u]->color == color){
 						color = rand()%4+1;
 						flag2 = 0;
 						break;
@@ -453,9 +450,8 @@ void RoomList::AddWalkRooms(){
 					break;
 				}
 			}
-		//printf("%d ", color);
-		Final[i].color = color;
-		printf("%d : %d \n", i, Final[i].color);
+		Final[i]->color = color;
+		printf("%d : %d \n", i, Final[i]->color);
 
 	}
 	list.clear();

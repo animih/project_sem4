@@ -180,6 +180,72 @@ public:
 	void render(sf::RenderWindow * window);
 };
 
+class Table:public Entity{
+	sf::Font * font;
+	sf::Text text;
+	Map * map;
+	bool is_close = 0;
+	bool is_key_pressed = 0;
+	int i = 0;
+
+	bool * triger;
+
+	public:
+		~Table();
+		Table(std::string F, float X, float Y, float W, float H, Map * map, sf::Font * font, std::string text, bool * triger);
+		void react(Entity * entity);
+		void update(const float &dt);
+		void update();
+		void render (sf::RenderWindow * window);
+
+};
+
+class Boss:public Entity{
+protected:
+	std::list<Entity *> * target_list;
+	std::list<Entity *>  * mobs;
+
+	AnimationComponent * animation;
+	Map * map;
+	GameState * gamestate;
+
+	Tactics * tactics;
+
+	Entity * player;
+
+	bool shoot = 0;
+
+	double Rotate_speed = 0;
+	double Max_Rotate_speed;
+
+	bool hit = 0;
+
+	double timer_kd = 5;
+	double timer = 0;
+	double shoot_timer = 0;
+
+	bool mode = 0;
+
+	std::pair<double, double> dest;
+	std::pair<int, int> dir;
+
+	sf::Image * second_image;
+	sf::Texture * second_texture;
+	sf::Sprite * second_sprite;
+
+	double start_x;
+	double start_y;
+
+public:
+	~Boss();
+	Boss(std::string F, float X, float Y, float W, float H, Map * map, std::list<Entity *> * targets, std::list<Entity *> * mobs, GameState * gamestate, Entity * player, Tactics * tactics);
+	void react(Entity * entity);
+	void update(const float &dt);
+	void update();
+	void render(sf::RenderWindow * window);
+	void setAngle(int dx, int dy);
+
+};
 
 
 #endif

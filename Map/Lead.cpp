@@ -1,5 +1,11 @@
 #include "map.h"
 
+/*
+
+Здесь расписан класс для проложения дороги для мобов. опционально учитывается их взаимное положение
+
+*/
+
 struct Node1{
 
 	int x;
@@ -42,9 +48,6 @@ std::pair<int, int> Tactics::lead_mob(double x1, double y1, double x2, double y2
 	int x_2 = int(round(x2/map->tile_size));
 	int y_2 = int(round(y2/map->tile_size));
 
-
-	//printf("me : %d %d \nmy crush: %d %d \n", x_1, y_1, x_2, y_2);
-
 	if(x_2 == x_1 && y_2 == y_1){
 		return std::make_pair(0, 0);
 	}
@@ -72,8 +75,6 @@ std::pair<int, int> Tactics::lead_mob(double x1, double y1, double x2, double y2
 
 		current = *(open.begin());
 		open.erase(open.begin());
-
-		//printf("%d %d \n", current.x, current.y);
 
 		if(current.x == x_2 && current.y == y_2){
 			x = current.x;
@@ -144,7 +145,6 @@ std::pair<int, int> Tactics::lead_mob(double x1, double y1, double x2, double y2
 			}
 
 			add += cost_so_far[current.y+HEIGHT/map->tile_size*current.x];
-			//printf("%d, %d, %d \n", add, x, y);
 
 			if(cost_so_far.count(y+HEIGHT/map->tile_size*x) == 0 || add < cost_so_far[y+HEIGHT/map->tile_size*x]){
 				cost_so_far[y+HEIGHT/map->tile_size*x] = add;
@@ -168,12 +168,7 @@ std::pair<int, int> Tactics::lead_mob(double x1, double y1, double x2, double y2
 
 	int buf;
 
-	//printf("Time to backtrack\n");
-
 	while(came_from[y+HEIGHT/map->tile_size*x] != -1){
-
-		//printf("%d %d \n", x, y);
-
 		x_buf = x;
 		y_buf = y;
 
@@ -183,8 +178,6 @@ std::pair<int, int> Tactics::lead_mob(double x1, double y1, double x2, double y2
 		y = buf%(HEIGHT/map->tile_size);
 
 	}
-
-	//printf("%d %d \n", x, y);
 
 	came_from.clear();
 	cost_so_far.clear();

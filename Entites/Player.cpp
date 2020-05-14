@@ -15,7 +15,7 @@ Player::Player(std::string F, float X, float Y, float W, float H, Map * map, sf:
 	components["FireCast"] = new FireCone(this, map, mobs, 298);
 	dash_duration = 0.25;
 	dash_kd = 1.8;
-	cast_kd = 1;
+	cast_kd = 9;
 
 }
 
@@ -84,10 +84,10 @@ void Player::control(){
 		components["hit2"]->Set_dir(mousePosView->x-this->x, mousePosView->y-this->y);
 		printf("Hit2 \n");
 	}
-	if(is_casting == 1 && animation->animations.count("./Resourses/Player_slash.png") == 0){
+	if(is_casting == 1 && animation->animations.count("./Resourses/FireAnimation.png") == 0){
 		is_casting = 0;
 		components["FireCast"]->Set_dir(mousePosView->x-this->x, mousePosView->y-this->y);
-		printf("Hit2 \n");
+		printf("Cast \n");
 	}
 
 	if(!is_dashing){

@@ -255,8 +255,6 @@ void MovementDamage::reload(){
 	for(auto u: *this->target){
 		copy_list.push_back(u);
 	}
-	printf("%d \n", copy_list.size());
-	printf("%d \n", target->size());
 }
 
 void MovementDamage::update(){

@@ -175,10 +175,8 @@ void Zombie::react(Entity * entity){
 		this->seen = 1;
 		dest.first = entity->x;
 		dest.second =  entity->y;
-		//printf("%f %f\n", dest.first, dest.second);
 	}
 	else if(this->seen){
-		//this->Rotate_speed = 0;
 		double rot_angle = atan2(dir.first, dir.second)-this->angle;
 		if(fabs(rot_angle) > M_PI){
 			rot_angle = -sign_sec(rot_angle)*(2*M_PI - fabs(rot_angle));

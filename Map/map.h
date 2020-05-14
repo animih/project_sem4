@@ -35,6 +35,7 @@ using namespace sf;
 class Graph{
 	int V;
 	public:
+		~Graph(){};
 		std::vector < std::list < int > > a;
 		Graph(int V);
 		void addEdge(int u, int w);
@@ -59,6 +60,7 @@ class Room{
 	int color = 0; // Маркер от 1 до 6, по которому происходит генерация окружения
 
 	public:
+	~Room(){}
 	Room(double x_left, double x_right, double y_top, double y_bottom, int tile_size);
 	void move(float time); // ф-ция перемещения отдельной комнаты
 	void upd(RenderWindow * window); // прорисовка
@@ -71,8 +73,8 @@ void random_size(int average, int* size, int tile_size);
 
 class RoomList{
 
-	std::list<Room> list; // Первоначальный список, в котором хранятся вобще все комнаты
-	std::vector<Room> Final; // Вектор из отобранных комнат
+	std::list<Room *> list; // Первоначальный список, в котором хранятся вобще все комнаты
+	std::vector<Room *> Final; // Вектор из отобранных комнат
 	Graph * graph; // Граф, репрезнтирующий подземелье
 
 	int tile_size;
@@ -88,7 +90,7 @@ class RoomList{
 		void generate_rooms(int radius, int average, int total_number); // Генерация комнат равномерно по окружности
 		bool push_rooms(float time); // Расталкивание комнат
 		void update(RenderWindow * window); // Прорисовка всех комнат
-		bool is_collide(std::_List_iterator<Room> room1, std::_List_iterator<Room>room2);
+		bool is_collide(std::_List_iterator<Room *> room1, std::_List_iterator<Room *>room2);
 		void TriEdges(); // Триангуляция Делоне
 		void DrawEdges(RenderWindow * window); // Прорисовка Триангуляции Делоне
 		void BuildTree(); // Алгоритм построения остового дерева
@@ -96,6 +98,12 @@ class RoomList{
 		void transpose_to_matrix(std::vector<std::list <char>> & a); // Переводим наши комнаты в матрицу
 		void AddWalkRooms(); // Добавляем комнаты на пересечении с рёрами
 		~RoomList(){
+			for(auto obj : list){
+				free(obj);
+			}
+			for(auto obj : Final){
+				free(obj);
+			}
 			list.clear();
 			Final.clear();
 			free(graph);
@@ -170,6 +178,11 @@ class Map{
 		double * make_map(int * size, int tile_size, int radius, int average, int number, RenderWindow *, std::map<std::string, std::vector<double>> & buf); // ф-ция собирающая всю карту (написана для удобства)
 		~Map(){
 			std::vector<std::list <char>>().swap(a);
+			render_mask.clear();
+			player_lighting_mask.clear();
+			env_lighting_mask.clear();
+
+			tactics_for.clear();
 		};
 		bool if_visible(double x1, double y1, double x2, double y2, bool seen = 0); // Алгоритм построения отрезка, возвращает 1 если все тайлы на пересечении с отрезком - свободные для перемещения, 0 в дргуом случае
 		void update_view_mask(const double & x_coord, const double & y_coord, double radius_coord); // просчёт маски видимости
@@ -181,6 +194,9 @@ class Map{
 		void reset_lighting_mask(); // сбрасывает маску для статического освещения
 		void make_test_map(int tile_size);
 		void reset_player_lighting_mask(); // сбрасывает маску для динамического освещения
+
+		double * make_boss_battle(int tile_size, std::map<std::string, std::vector<double>> & buf);
+
 
 };
 
