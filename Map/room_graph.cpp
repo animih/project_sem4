@@ -31,11 +31,52 @@ void Room::move(float time){
 	num_neighbors = 1;
 
 }
+
+/*
+	Генерация окружения.
+
+	Тут идея очень проста, у каждой комнаты есть свой цвет-маркер,
+	который раздавался так, чтобы не было двух соседних комнат
+	одного цвета (для разнообразия игрового процесса)
+
+	Изначально было такое распределение:
+
+	1- Синий цвет. Генерация водоёмов, колон и, возможно, 
+	мобов  в засаде
+	2 - Зелёный цвет. Генерация травы, колон и, возможно, мобов  в засаде
+	3 - Жёлтый цвет - абсолютно рандомная генерация.
+	4 - Комнаты, представляющие наибольшую опасность:
+		варды/мобы
+	5 - Комнаты с числом соседних > 3. Важные узлы
+	6 - комнаты с числом соседних = 1. Потенциальные тайные/закрытые комнаты.
+
+*/
+
 void Room::upd(RenderWindow * window){
 
 	RectangleShape room(sf::Vector2f(x_right-x_left, y_bottom-y_top));
 	room.setPosition(x_left, y_top);	
 	room.setOutlineThickness(2);
+	switch(color){
+		case 1:
+			room.setFillColor(sf::Color::Blue);
+			break;
+		case 2:
+			room.setFillColor(sf::Color::Green);
+			break;
+		case 3:
+			room.setFillColor(sf::Color::Yellow);
+			break;
+		case 4:
+			room.setFillColor(sf::Color::Red);
+			break;
+		case 5:
+			room.setFillColor(sf::Color(177, 177, 177));
+			break;
+		case 6:
+			room.setFillColor(sf::Color(77, 77, 77));
+			break;
+	}
  	room.setOutlineColor(sf::Color(255, 255, 255));
  	window->draw(room);
 

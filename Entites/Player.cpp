@@ -15,8 +15,7 @@ Player::Player(std::string F, float X, float Y, float W, float H, Map * map, sf:
 	components["FireCast"] = new FireCone(this, map, mobs, 298);
 	dash_duration = 0.25;
 	dash_kd = 1.8;
-	cast_kd = 7;
-	timer_2 = cast_kd;
+	cast_kd = 1;
 
 }
 

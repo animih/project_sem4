@@ -52,20 +52,6 @@ void Zombie::render(sf::RenderWindow * window){
    	
     sf::RectangleShape rect;
     rect.setOrigin(8, 8);
-    /*
-    rect.setSize(sf::Vector2f(16, 16));
-    rect.setFillColor(sf::Color::Red);
-    rect.setPosition(sf::Vector2f(this->x, this->y));
-
-
-   	window->draw(rect);
-
-   	rect.setPosition(this->x+dir.first*32, this->y+dir.second*32);
-   	window->draw(rect);
-
-   	rect.setPosition(dest.first, dest.second);
-   	window->draw(rect);
-   	*/
    	double hp = components["Hp"]->Get_hp();
    	rect.setSize(sf::Vector2f(64*hp, 16));
    	rect.setFillColor(sf::Color(14, 220, 60, 82*a/255));

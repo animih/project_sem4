@@ -378,7 +378,7 @@ void OnFlame::update(){
 		this->exists = 0;
 	}
 
-	if(map->get_tile(owner->x, owner->y) == 3)
+	if(map->intersec(owner->x, owner->y) == 3)
 		this->exists = 0;
 
 	map->update_player_lighting_mask(owner->x, owner->y, 120);

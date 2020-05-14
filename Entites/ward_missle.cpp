@@ -132,7 +132,6 @@ Entity(F, X, Y, W, H){
 
 	this->dir_x = cos(angle);
 	this->dir_y = sin(angle);
-	//this->sprite->setRotation(this->angle * 180 / 3.14159265);
 
 	this->angle = angle;
 	this->speed = speed;
@@ -213,8 +212,6 @@ void Missle::render(sf::RenderWindow * window){
 	if(not map->getMask(x, y)){
 		return;
 	}
-
-	//int a = map->getLum(x, y);
 	this->sprite->setRotation(this->angle * 180 / 3.14159265);
 	this->sprite->setColor(sf::Color(255, 255, 255));
 	this->sprite->setPosition(this->x, this->y);

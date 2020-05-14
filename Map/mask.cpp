@@ -163,7 +163,7 @@ void cast_light_for_player(Map * map, int x, int y, int radius, int row, double 
 
 };
 
-// Это просто костыль, который я подсмотрел у пользователя на github (он там писал тот же алгоритм, но чуть иначе)
+// Это просто костыль
 
 static int multipliers[4][8] = {
     {1, 0, 0, -1, -1, 0, 0, 1},
@@ -176,7 +176,7 @@ static int multipliers[4][8] = {
 	Краткое описание того, что делает update.
 	По факту он вызывает shadow-cast для каждого октета
 
-	собстенно для каждого октета в цикле я и считаю видимые клетки (делаю рекурсивный шадоу-каст)
+	собстенно для каждого октета в цикле я и считаю видимые клетки (делаю рекурсивный shadow-cast)
 
 				
 	   \   |   /
@@ -239,8 +239,7 @@ void Map::reset_player_lighting_mask(){
 	Этот метод возвращает элемент маски видимости, на котором находится точка с произвольными кооридантами
 	простыми слвоами:
 
-	true - в поле зрения
-	false - не-а
+	1 - в поле зрения, 0 - иначе
 
 */
 
@@ -249,16 +248,6 @@ const bool Map::getMask(double x, double y){
 	return (render_mask.count(int(round(y/tile_size))+int(round(x/tile_size))*HEIGHT/tile_size)) != 0;
 
 }
-
-/*
-
-	Возварщает коэф прозрачности для элемента макси, на котором находится точка с произвольынми коордами.
-	255 - не прозрачный
-	0 - абсолютно прозрачный
-
-	Если элемента нет в маске, то возвращается 0
-
-*/
 
 int Map::getLum(double x, double y){
 
@@ -272,12 +261,6 @@ int Map::getLum(double x, double y){
 	return env_lighting_mask[int(round(y/tile_size))+int(round(x/tile_size))*HEIGHT/tile_size];
 
 }
-
-/*
-
- Это шадоу-каст для окружения
-
-*/
 
 void cast_light_for_env(Map * map, int x, int y, int radius, int row, double start_slope, double end_slope, int xx, int xy, int yx, int yy, bool is_on){
 

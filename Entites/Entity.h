@@ -9,6 +9,7 @@
 
 class GameState;
 
+// абстракный класс для сущности
 class Entity
 {
 friend class GameState;

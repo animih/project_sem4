@@ -4,7 +4,7 @@
 #include "A_star.h"
 
 
-// ф-ция для записи конмат в матрицу.
+// ф-ция для перевода комнат в матрицу тайлов
 
 void RoomList::transpose_to_matrix(std::vector<std::list <char>>& a){
 
@@ -75,7 +75,7 @@ void Map::render_all(RenderWindow * window){
 			tile.setPosition(x-tile_size/2, y-tile_size/2);	
 
 			switch(a[i+HEIGHT/tile_size*j].back()){
-				// 1 - стена (но не та, что альбом или книга Сартра)
+				// 1 - стена
 				case 1:
 					tile.setFillColor(sf::Color(255, 255, 255));
 					window->draw(tile);
@@ -105,7 +105,7 @@ void Map::render_all(RenderWindow * window){
 					tile.setFillColor(sf::Color(105, 105, 105));
 					window->draw(tile);
 					break;
-				// 6 - лестница (в рай)
+				// 6 - лестница
 				case 6:
 					tile.setFillColor(sf::Color(0, 0, 0));
 					window->draw(tile);
@@ -135,7 +135,7 @@ void Map::render_all(RenderWindow * window){
 					tile.setFillColor(sf::Color(204, 115, 0));
 					window->draw(tile);
 					break;
-				// моб в засаде (наелся в траве и спит.)
+				// моб в засаде
 				case -4:
 					tile.setFillColor(sf::Color(178, 34, 34));
 					window->draw(tile);
@@ -209,7 +209,7 @@ void Map::render_region(RenderWindow * window, double x_left, double x_right, do
 			tile.setPosition(x-tile_size/2, y-tile_size/2);	
 
 			switch(this->a[i+HEIGHT/tile_size*j].back()){
-				// 1 - стена (но не та, что альбом или книга Сартра)
+				// 1 - стена
 				case 1:
 					if(env_lighting_mask.count((i1+i2)/2+HEIGHT/tile_size*(j1+j2)/2) == 0){
 						liten = 0;
@@ -257,7 +257,7 @@ void Map::render_region(RenderWindow * window, double x_left, double x_right, do
 					tile.setFillColor(sf::Color(105, 105, 105, a));
 					window->draw(tile);
 					break;
-				// 6 - лестница (в рай)
+				// 6 - лестница
 				case 6:
 					tile.setFillColor(sf::Color(0, 0, 0, a));
 					window->draw(tile);
@@ -287,7 +287,7 @@ void Map::render_region(RenderWindow * window, double x_left, double x_right, do
 					tile.setFillColor(sf::Color(204, 115, 0, a));
 					window->draw(tile);
 					break;
-				// моб в засаде (наелся в траве и спит.)
+				// моб в засаде
 				case -4:
 					tile.setFillColor(sf::Color(55, 45, 65, a));
 					window->draw(tile);
@@ -382,26 +382,20 @@ void Map::build_Hallways(){
 /*
 	Генерация окружения.
 
-	Тут идея очень проста, у каждой комнаты - цвет маркер,
-	который раздавался так, чтоыб не было двух соседних комнат
-	одного цвета (чтобы игрвоой процесс был разнообразней =) )
+	Тут идея очень проста, у каждой комнаты есть свой цвет-маркер,
+	который раздавался так, чтобы не было двух соседних комнат
+	одного цвета (для разнообразия игрового процесса)
 
-	Изначально я предплагал такое распределние:
+	Изначально было такое распределение:
 
 	1- Синий цвет. Генерация водоёмов, колон и, возможно, 
-	каких-нибдуь речных мобов, если такие будут (крабы?)
-	2 - Зелёный цвет. Генерация травы и каких-нибудь растений. Ещё тут есть колоны (зачем хз)
-	сюда можно засунуть (при редком случае) каких-нибдуь мобов в засаде
-	3 - Жёлтый цвет - абсолютно рандомная генерация. Возможны сундуки с лутом.
+	мобов  в засаде
+	2 - Зелёный цвет. Генерация травы, колон и, возможно, мобов  в засаде
+	3 - Жёлтый цвет - абсолютно рандомная генерация.
 	4 - Комнаты, представляющие наибольшую опасность:
-		ловушки/мобы
-	5 - Комнаты с числом соседних > 3. Одна из таких комнат
-	должна иметь лестницу, другие можно приспосбить под какую-нибдуь
-	сокровищницу/декоративную площадку
+		варды/мобы
+	5 - Комнаты с числом соседних > 3. Важные узлы
 	6 - комнаты с числом соседних = 1. Потенциальные тайные/закрытые комнаты.
-
-	потому просбюа подробно расписывать метод генерации и собсвтенно сам объект,
-	что кидается в комнату. Желаю весело провести время =)
 
 */
 
@@ -411,12 +405,78 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 	auto rng = std::default_random_engine {};
 
+	bool flag_for_pilar;
 	bool flag_for_locked = 0;
 	int counter_of_traps = Rooms->Final.size()/2;
 
 	for(int i = 1; i< Rooms->Final.size(); i ++){
-
+		flag_for_pilar = 0;
 		printf("%d ", i);
+
+		/*
+	
+			В зелённые и синие и жёлтые комнаты с вероятность 1/2 монтирую колоны 
+			(объект размером 3x3, по бокам стенки, в центре - пусто)
+
+			Объязательно проверю, чтобы моя колонна не загородила проход или примкунла к стене
+			Если такое происходит - просто заканчиваю попытку (поэтому реально на карте обычно больше 2 колонн не увидишь)
+
+
+		*/
+
+		if(Rooms->Final[i].color == 3 || Rooms->Final[i].color == 2 || Rooms->Final[i].color == 1){
+
+			if(rand()%2)
+				continue;
+
+			int value = rand()%3;
+
+			int x_left = int(round(((Rooms->Final[i].x_left)/tile_size)));
+			int x_right = int(round(((Rooms->Final[i].x_right)/tile_size)));
+
+			int y_top = int(round(((Rooms->Final[i].y_top)/tile_size)));
+			int y_bottom = int(round(((Rooms->Final[i].y_bottom)/tile_size)));
+
+			for(int l = 0; l < value; l++){
+
+				int x = rand()%(x_right-x_left-3)+x_left+3;
+				int y = rand()%(y_bottom-y_top-3)+y_top+3;
+
+				bool flag1 = 0;
+
+				for(int k = 0; k < 7; k++){
+					for(int h = 0; h < 7; h++){
+						if(a[y-4+k+(x-4+h) * HEIGHT/tile_size].back() == 2 || a[y-4+k+(x-4+h) * HEIGHT/tile_size].back() == 1){
+							flag1 = 1;
+							break;
+						}
+					}
+					if(flag1)
+						break;
+				}
+
+				if(flag1){
+					continue;
+				}
+
+			
+
+				for(int k = 0; k < 3; k++){
+					for(int h = 0; h < 3; h++){
+						if(k != 1 || h!= 1){
+							a[y-1+k+(x-1+h) * HEIGHT/tile_size].back() = 1;
+						}
+						
+					}
+
+				}
+
+				a[x+y * HEIGHT/tile_size].back() = -1;
+				flag_for_pilar = 1;
+
+			}
+
+		}
 
 		/*
 
@@ -424,7 +484,7 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 			Вероятность - 50 %
 			выбираю радномную точку в пределах комнаты
-			и A* строю из неё путь в соседние комнаты.
+			и строю из неё путь в соседние комнаты.
 			Далее этот путь обрываю до дверей, а там
 			даю воде совсем чуть-чуть растечься.
 
@@ -453,7 +513,7 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 			int x2 = int(round(((Rooms->Final[u].x_left+Rooms->Final[u].x_right)/2)/tile_size));
 			int y2 = int(round(((Rooms->Final[u].y_top+Rooms->Final[u].y_bottom)/2)/tile_size));
 
-			std::vector<int> res = A_star_inside(x1, y1, x2, y2, a, HEIGHT/tile_size, WIDTH/tile_size); // A_star но уже внутренний, который не идёт по стенам
+			std::vector<int> res = A_star_inside(x1, y1, x2, y2, a, HEIGHT/tile_size, WIDTH/tile_size);
 			int counter = 0;
 
 			// Сперва рисую на пустых клетках прямо на пути.
@@ -470,7 +530,7 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 			}
 
-			// Обрисовываю оборванный путь в 3-окрестности. НА выход за пределы комнаты - пофиг (это типо двери протекают)
+			// Обрисовываю оборванный путь в 3-окрестности. На выход за пределы комнаты - всё равно (это двери протекают)
 
 			for(int j = 0; j < counter; j+=2){
 
@@ -524,8 +584,8 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 			В зелённых комнатах генерирую траву. 
 			Выбираю рандомно 0-3 "очага" генерации.
 			Затем в прямоугольной окрестности с вероятностью 1/2 генерю тайл травы
-			Генерация происходит либов  пустом месте, либо на воде (я подумал, что так логично)
-			На выход за пределы комнаты - забиваю, т.к. это выглядит даже реалистичней
+			Генерация происходит либо в  пустом месте, либо на воде (я подумал, что так логично)
+			На выход за пределы комнаты - всё равно, т.к. трава может разрастаться даже через стену.
 
 		*/
 
@@ -549,7 +609,7 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 				for(int k = 0; k < 7; k++){
 					for(int h = 0; h < 7; h++){
-					if(rand()%2){ // Успех = кидаю травку
+					if(rand()%2){ // Успех = кидаю траву
 
 						if(a[y-4+k+(x-4+h) * HEIGHT/tile_size].back() == 0 || a[y-4+k+(x-4+h) * HEIGHT/tile_size].back() == 3){
 							a[y-4+k+(x-4+h) * HEIGHT/tile_size].push_back(4);
@@ -589,70 +649,6 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 					}
 				}
 
-
-			}
-
-		}
-
-		/*
-	
-			В зелённые и синие и жёлтые комнаты с вероятность 1/2 пихаю колонны 
-			(объект размером 3x3, по бокам стенки, в центре - пусто)
-
-			Объязательно проверю, чтобы моя колонна не загородила проход или примкунла к стене
-			Если такое происходит - просто заканчиваю попытку (поэтому реально на карте оюычно больше 2 колонн не увидишь)
-
-
-		*/
-
-		if(Rooms->Final[i].color == 3 || Rooms->Final[i].color == 2 || Rooms->Final[i].color == 1){
-
-			if(rand()%2)
-				continue;
-
-			int value = rand()%3;
-
-			int x_left = int(round(((Rooms->Final[i].x_left)/tile_size)));
-			int x_right = int(round(((Rooms->Final[i].x_right)/tile_size)));
-
-			int y_top = int(round(((Rooms->Final[i].y_top)/tile_size)));
-			int y_bottom = int(round(((Rooms->Final[i].y_bottom)/tile_size)));
-
-			for(int l = 0; l < value; l++){
-
-				int x = rand()%(x_right-x_left-3)+x_left+3;
-				int y = rand()%(y_bottom-y_top-3)+y_top+3;
-
-				bool flag1 = 0;
-
-				for(int k = 0; k < 7; k++){
-					for(int h = 0; h < 7; h++){
-						if(a[y-4+k+(x-4+h) * HEIGHT/tile_size].back() == 2 || a[y-4+k+(x-4+h) * HEIGHT/tile_size].back() == 1){
-							flag1 = 1;
-							break;
-						}
-					}
-					if(flag1)
-						break;
-				}
-
-				if(flag1){
-					continue;
-				}
-
-			
-
-				for(int k = 0; k < 3; k++){
-					for(int h = 0; h < 3; h++){
-						if(k != 1 || h!= 1){
-							a[y-1+k+(x-1+h) * HEIGHT/tile_size].back() = 1;
-						}
-						
-					}
-
-				}
-
-				a[x+y * HEIGHT/tile_size].back() = -1;
 
 			}
 
@@ -860,9 +856,8 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 	/*
 
 		С веротяностью 1/6 в каждой комнате прокладываю дороги от дверей.
-		Дороги строются через A* из них отбираются самые длинные (просто жадный алгоритм, тут я не считаю общую длину путей)
 
-		дороги нужны просто для декора и другие тайлы не перекрашивают.
+		дороги нужны просто для декора и другие тайлы не закрашивают.
 
 	*/
 
@@ -966,83 +961,6 @@ void Map::Gen_Sur(std::map<std::string, std::vector<double>> & buf){
 
 
 }
-/*
-
-Респавн мобов у меня работает буквально в границе экрана (т.е. в армке ширинйо один тайл за обзором). 
-Это очень класс решает проблему оптимищации, но если точка спавна окажется сразу же в пределах видимости игрока при начале игры, то
-она србаотет только если от неё отдалится =(
-Хорошим решением была бы единичная респа всех мобов в пределе видимотси, но мне лень это писать.
-
-*/
-
-void Map::check_Spawn(std::map<std::string , std::vector<double>> & buf, const double & x, const double & y, double range){
-
-	int j1 = int(round(x-range)/tile_size);
-	int i1 = int(round(y-range)/tile_size);
-
-	int j2 = int(round(x+range)/tile_size);
-	int i2 = int(round(y+range)/tile_size);
-
-
-	if(i1 < 0)
-		i1 = 0;
-	if(j1 < 0)
-		j1 = 0;
-
-	if(i2 > HEIGHT/tile_size-1)
-		i2 = HEIGHT/tile_size-1;
-	if(i2 > WIDTH/tile_size-1)
-		j2 = WIDTH/tile_size-1;
-
-	
-
-		for(int j = j1; j < j2; j++){
-
-			if(a[i1+j*HEIGHT/tile_size].back()==-4){
-			a[i1+j*HEIGHT/tile_size].pop_back();
-			buf["Zombie"].push_back(j*tile_size);
-			buf["Zombie"].push_back(i1*tile_size);
-			printf("%d %d \n", i1, j);
-			}
-
-		}
-
-		for(int j = j1; j < j2; j++){
-
-			if(a[i2+j*HEIGHT/tile_size].back()==-4){
-			a[i2+j*HEIGHT/tile_size].pop_back();
-			buf["Zombie"].push_back(j*tile_size);
-			buf["Zombie"].push_back(i2*tile_size);
-			printf("%d %d \n", i2, j);
-			}
-
-		}
-
-		for(int i = i1+1; i < i2-1; i++){
-
-			if(a[i+j1*HEIGHT/tile_size].back()==-4){
-			a[i+j1*HEIGHT/tile_size].pop_back();
-			buf["Zombie"].push_back(j1*tile_size);
-			buf["Zombie"].push_back(i*tile_size);
-			printf("%d %d \n", i, j1);
-			}
-
-		}
-
-		for(int i = i1+1; i < i2-1; i++){
-
-			if(a[i+j2*HEIGHT/tile_size].back()==-4){
-			a[i+j2*HEIGHT/tile_size].pop_back();
-			buf["Zombie"].push_back(j2*tile_size);
-			buf["Zombie"].push_back(i*tile_size);
-			printf("%d %d \n", i, j2);
-			}
-
-		}
-
-
-
-}
 
 // просто мне нужна ф-ция для определния знака
 
@@ -1062,7 +980,7 @@ int sign(int a){
  так, ну вот этот метод определяет пересекает ли прямая,
   соединяющая две произвольные точки какой-нибдуь непрозрачный тайл (стена или дверь)
 
-  простым словами, тут обрисовывается "клетками прямая (причём точно, я намернно тестил алгос)
+  простым словами, тут обрисовывается "клетками прямая.
 
  */
 
@@ -1135,15 +1053,5 @@ bool Map::if_visible(double x1, double y1, double x2, double y2, bool seen){
 	}
 
 	return true;
-
-}
-
-// Просто костыль для возврата моба на карту в качестве точки спавна
-
-void Map::push_mob_back(int id, const double & x, const double & y){
-
-
-	this->a[int(round(y/tile_size))+int(round(x/tile_size))*HEIGHT/tile_size].push_back(id);
-
 
 }

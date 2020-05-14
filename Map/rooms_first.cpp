@@ -2,11 +2,9 @@
 #include "map.h"
 #include "delauney.h"
 
-
-// Условная "бесконечность" для алг Прима (ключ - растояние между центрами)
 #define INF 9999999999
 
-//Просто, чтобы не заебаться пока пишешь это
+//Просто костыль для облегчения написания кода
 
 #define num1_top Final[i].y_top
 #define num1_bottom  Final[i].y_bottom
@@ -22,12 +20,9 @@
 #define num2_x (Final[*it].x_left+Final[*it].x_right)/2
 #define num2_y (Final[*it].y_bottom+Final[*it].y_top)/2
 
-//Проверка комнат на пересечение
+RoomList::RoomList(){}
 
-RoomList::RoomList(){
-	return;
-}
-
+// 0 - base, 1 - Все комнаты раскиданы
 bool RoomList::is_collide(std::_List_iterator<Room> room1, std::_List_iterator<Room>room2){
 
 	float * coord1 = (float*)malloc(2*sizeof(float));
@@ -52,8 +47,6 @@ bool RoomList::is_collide(std::_List_iterator<Room> room1, std::_List_iterator<R
 		fabs(coord1[1]-coord2[1]) <= (size1[1]+ size2[1]+1)*1.01;
 
 }
-
-// 0 - base, 1 - Все комнаты раскиданы
 
 bool RoomList::push_rooms(float time){
 
@@ -102,7 +95,8 @@ void RoomList::update(RenderWindow * window){
 
 }
 
-/* Генерируем лист комнат. 
+/* 
+	Генерируем комнаты. 
 
 	Размеры - Гауссовское распр
 	Координаты - равномерное по кругу
@@ -139,9 +133,7 @@ void RoomList::generate_rooms(int radius, int average, int total_number){
 /*
 
 	Здесь происходит триангуляция Делоне.
-	По-хорошему, стоит перепписать библиотеку под свои нужды.
-	Но в прицнипе, итак работает.
-	Так что и пофиг.
+	За библиотеку спасибо пользователю delfrrr
 
 */
 
@@ -231,11 +223,7 @@ void RoomList::DrawEdges(RenderWindow * window){
 
 
 /* 
-	Короче, дальше на подходе алгоритм Прима
-	Перовначально, я писал его через кучу (отсюда и название pop_min)
-	Но, как оказалось, из-за одной микроштуки там всё равно скорость о(n)
-	Так что я переписал всё под массив
-	НУ а хуле нам.
+	Дальше на подходе алгоритм Прима.
 */
 
 int pop_min(double * weight, int number){
@@ -268,7 +256,7 @@ void RoomList::BuildTree(){
 
 	for(int i = 0; i< number; i++){
 		weight[i] = INF; // Весь весовой массив - бесконечности
-		parrent[i] = -1; // Все дети - сироты. Мир - печлаьное место
+		parrent[i] = -1; // Изначально родителей нет
 	}
 
 	weight[0] = 0;
@@ -295,8 +283,6 @@ void RoomList::BuildTree(){
 
 
 		v = pop_min(weight, number);
-
-		//graph->a[parrent[v]] = {v};
 		
 		
 		
@@ -309,20 +295,14 @@ void RoomList::BuildTree(){
 	
 	int n = rand()%number;
 
-	/* Здесь происходит возварщение части рёбер из триангуляции
-		По-просту говоря, я хоу иметь проодные пути в своём подземелье.
-	
-		Беда в том, что такой подход рушит всё то, ради чего минимальное дерево строилось
-		Из-за этого, редко, происхожит наслаивание "коридоров". Мб получится решить эту проблему прорисовкой в ходе игры (один идёт сверху, другйо снизу)
-
-		Если кто-то придумает более изящный сопосб возвращения проходных коридоров, я буду очень рад.
+	/* Здесь происходит возвращение части рёбер из триангуляции
+		По-просту говоря, это нужно для наличия проходных путей.
 	*/
 
 	
 	std::vector <int> visited = {};
 
 	for(int i = 0; i<number; i+= 7){
-		//while(std::find(visited.begin(), visited.end(), n) != visited.end()) // ТУт проблема - почему-то работает лучше без исключения повтора (?!). Скорей всего я - лох
 		n = rand()%number;
 		for(int k: graph->a[n]){
 			if(parrent[k] == n || parrent[n] == k){
