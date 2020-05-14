@@ -104,6 +104,17 @@ void GameState::update(const float & dt){
 }
 
 void GameState::update(){
+
+	if(!player->if_exists() && !this->quit){
+		this->states->push(new EndMessage(this->window, this, states, player->x-window->getSize().x/2, player->y-window->getSize().y/2, "You died"));
+		this->quit = true;
+	}
+
+	if(buf.count("Boss")!= 0 && this->active_mobs.size() == 0 && !this->quit){
+		this->states->push(new EndMessage(this->window, this, states, player->x-window->getSize().x/2, player->y-window->getSize().y/2, "You won"));
+		this->quit = true;
+	}
+
 	map->reset_player_lighting_mask();
 	for(auto chr : active_characters){
 		for(auto mob : active_mobs){
