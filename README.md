@@ -1,5 +1,5 @@
 # project_sem4
-A graduation project for MIPT programming course. Huge C++ project of simple rogue-lite game.
+A graduation project for MIPT programming course. C++ project of rogue-lite game.
 
 Implemented:
 - Procedure map generation
